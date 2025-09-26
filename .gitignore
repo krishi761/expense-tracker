@@ -1,0 +1,39 @@
+# Angular
+.angular/
+dist/
+node_modules/
+.env
+
+# .NET Core
+ExpenseAPI/bin/
+ExpenseAPI/obj/
+*.user
+*.suo
+*.cache
+*.docstates
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+backend.log
+
+# Build outputs
+*.dll
+*.exe
+*.pdb
+
+
