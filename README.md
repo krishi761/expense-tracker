@@ -58,7 +58,7 @@ cd expense-tracker
 
 4. Run the API:
    ```bash
-   dotnet run --urls="http://localhost:8000"
+   dotnet run
    ```
 
 The API will start on `http://localhost:8000`.
@@ -83,22 +83,6 @@ The API will start on `http://localhost:8000`.
    ```
 
 The Angular app will start on `http://localhost:4200`.
-
-### 4. Quick Start (Both Servers)
-
-For convenience, you can use the provided scripts to start both servers:
-
-**Linux/macOS:**
-
-```bash
-./start-servers.sh
-```
-
-**Windows:**
-
-```bash
-start-servers.bat
-```
 
 ## API Endpoints
 
