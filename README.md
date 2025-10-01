@@ -89,7 +89,7 @@ cd expense-tracker
 
    The Angular app will be available at `http://localhost:4200`
 
-## The API includes Swagger documentation available at `http://localhost:8000/swagger` when the backend is running.
+### The API includes Swagger documentation available at `http://localhost:8000/swagger` when the backend is running.
 
 ## Usage Guide
 
