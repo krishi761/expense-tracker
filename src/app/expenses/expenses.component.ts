@@ -1,6 +1,8 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { Router, ActivatedRoute } from "@angular/router";
+import { Subscription } from "rxjs";
 import { Expense } from "../models/expense.model";
 import { Category } from "../models/category.model";
 import { SubCategory } from "../models/sub-category.model";
@@ -15,16 +17,26 @@ import { SubCategoryService } from "../services/sub-category.service";
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Manage Expenses</h1>
-        <button class="btn btn-primary" (click)="showAddForm()">
-          Add Expense
-        </button>
+        <h1>{{ getPageTitle() }}</h1>
+        <div class="header-actions" *ngIf="isManageView()">
+          <button 
+            *ngIf="currentView === 'list'" 
+            class="btn btn-primary" 
+            (click)="showAddForm()">
+            Add Expense
+          </button>
+          <button 
+            *ngIf="currentView === 'form'" 
+            class="btn btn-secondary" 
+            (click)="showListView()">
+            Back to List
+          </button>
+        </div>
       </div>
 
       <!-- Add/Edit Form -->
-      <div class="form-container" *ngIf="showForm">
+      <div class="form-container" *ngIf="currentView === 'form'">
         <div class="form-card">
-          <h2>{{ isEditing ? "Edit Expense" : "Add Expense" }}</h2>
           <form (ngSubmit)="onSubmit()" #expenseForm="ngForm">
             <div class="form-group">
               <label for="name">Name:</label>
@@ -183,7 +195,7 @@ import { SubCategoryService } from "../services/sub-category.service";
       </div>
 
       <!-- Expenses Table -->
-      <div class="table-container" *ngIf="!showForm">
+      <div class="table-container" *ngIf="currentView === 'list'">
         <table class="data-table">
           <thead>
             <tr>
@@ -194,7 +206,7 @@ import { SubCategoryService } from "../services/sub-category.service";
               <th>Date</th>
               <th>Category</th>
               <th>Sub-category</th>
-              <th>Actions</th>
+              <th *ngIf="isManageView()">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -206,7 +218,7 @@ import { SubCategoryService } from "../services/sub-category.service";
               <td>{{ expense.date | date : "dd/MM/yyyy" }}</td>
               <td>{{ expense.categoryName }}</td>
               <td>{{ expense.subCategoryName }}</td>
-              <td class="actions">
+              <td class="actions" *ngIf="isManageView()">
                 <button
                   class="btn btn-sm btn-edit"
                   (click)="editExpense(expense)"
@@ -356,12 +368,6 @@ import { SubCategoryService } from "../services/sub-category.service";
         border: 1px solid #e0e0e0;
       }
 
-      .form-card h2 {
-        margin-bottom: 25px;
-        color: #333;
-        font-size: 24px;
-        font-weight: 600;
-      }
 
       .form-group {
         margin-bottom: 20px;
@@ -520,6 +526,10 @@ import { SubCategoryService } from "../services/sub-category.service";
       }
 
       @media (max-width: 768px) {
+        .page-container {
+          padding-top: 80px; /* Add top padding to prevent nav bar overlap */
+        }
+
         .page-header {
           flex-direction: column;
           gap: 15px;
@@ -552,16 +562,17 @@ import { SubCategoryService } from "../services/sub-category.service";
     `,
   ],
 })
-export class ExpensesComponent implements OnInit {
+export class ExpensesComponent implements OnInit, OnDestroy {
   expenses: Expense[] = [];
   categories: Category[] = [];
   subCategories: SubCategory[] = [];
   filteredSubCategories: SubCategory[] = [];
-  showForm = false;
+  currentView: 'list' | 'form' = 'list';
   isEditing = false;
   showDeleteModal = false;
   expenseToDelete: Expense | null = null;
   currentExpenseDate = "";
+  private routeSubscription: Subscription = new Subscription();
 
   currentExpense: Partial<Expense> = {
     name: "",
@@ -575,7 +586,9 @@ export class ExpensesComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private categoryService: CategoryService,
-    private subCategoryService: SubCategoryService
+    private subCategoryService: SubCategoryService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -590,10 +603,57 @@ export class ExpensesComponent implements OnInit {
     this.expenseService.getExpensesWithNames().subscribe((expenses) => {
       this.expenses = expenses;
     });
+
+    this.updateViewBasedOnRoute();
+    
+    // Subscribe to route changes
+    this.routeSubscription = this.router.events.subscribe(() => {
+      this.updateViewBasedOnRoute();
+    });
+  }
+
+  ngOnDestroy() {
+    this.routeSubscription.unsubscribe();
+  }
+
+  private updateViewBasedOnRoute() {
+    const currentUrl = this.router.url;
+    if (currentUrl.includes('/manage')) {
+      this.currentView = 'list'; // Show list view in manage mode
+    } else {
+      this.currentView = 'list'; // Show read-only list view
+    }
+  }
+
+  isManageView(): boolean {
+    return this.router.url.includes('/manage');
+  }
+
+  getPageTitle(): string {
+    if (this.isManageView()) {
+      return this.currentView === 'list' ? 'Manage Expenses' : (this.isEditing ? 'Edit Expense' : 'Add Expense');
+    } else {
+      return 'Expenses';
+    }
   }
 
   showAddForm() {
-    this.showForm = true;
+    this.currentView = 'form';
+    this.isEditing = false;
+    this.currentExpense = {
+      name: "",
+      description: "",
+      amount: 0,
+      date: new Date(),
+      categoryId: 0,
+      subCategoryId: 0,
+    };
+    this.currentExpenseDate = new Date().toISOString().split("T")[0];
+    this.filteredSubCategories = [];
+  }
+
+  showListView() {
+    this.currentView = 'list';
     this.isEditing = false;
     this.currentExpense = {
       name: "",
@@ -608,7 +668,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   editExpense(expense: Expense) {
-    this.showForm = true;
+    this.currentView = 'form';
     this.isEditing = true;
     this.currentExpense = {
       name: expense.name,
@@ -679,7 +739,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   cancelForm() {
-    this.showForm = false;
+    this.currentView = 'list';
     this.isEditing = false;
     this.currentExpense = {
       name: "",

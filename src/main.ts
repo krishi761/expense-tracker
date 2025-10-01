@@ -42,46 +42,109 @@ import { PatternActiveDirective } from "./app/directives/pattern-active.directiv
         <nav>
           <ul class="nav-menu">
             <li class="nav-item">
-              <a
-                routerLink="/categories"
-                appPatternActive
-                matchType="exact"
-                patternValue="/categories"
-                class="nav-link"
-                data-tooltip="Manage Categories"
-                (click)="closeMobileSidebar()"
-              >
-                <span class="nav-link-icon">📁</span>
-                <span class="nav-link-text">Manage Categories</span>
-              </a>
+              <div class="nav-parent">
+                <a
+                  routerLink="/categories"
+                  appPatternActive
+                  matchType="exact"
+                  patternValue="/categories"
+                  class="nav-link"
+                  data-tooltip="Categories"
+                  (click)="handleCategoriesClick($event)"
+                >
+                  <span class="nav-link-icon">📁</span>
+                  <span class="nav-link-text">Categories</span>
+                  <span class="nav-expand-icon" [class.expanded]="isCategoriesExpanded">
+                    {{ isCategoriesExpanded ? '▼' : '▶' }}
+                  </span>
+                </a>
+                <ul class="nav-submenu" [class.expanded]="isCategoriesExpanded">
+                  <li class="nav-subitem">
+                    <a
+                      routerLink="/categories/manage"
+                      appPatternActive
+                      matchType="startsWith"
+                      patternValue="/categories/manage"
+                      class="nav-sublink"
+                      data-tooltip="Manage Categories"
+                      (click)="closeMobileSidebar()"
+                    >
+                      <span class="nav-sublink-icon">⚙️</span>
+                      <span class="nav-sublink-text">Manage</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
             <li class="nav-item">
-              <a
-                routerLink="/sub-categories"
-                appPatternActive
-                matchType="exact"
-                patternValue="/sub-categories"
-                class="nav-link"
-                data-tooltip="Manage Sub-categories"
-                (click)="closeMobileSidebar()"
-              >
-                <span class="nav-link-icon">📂</span>
-                <span class="nav-link-text">Manage Sub-categories</span>
-              </a>
+              <div class="nav-parent">
+                <a
+                  routerLink="/sub-categories"
+                  appPatternActive
+                  matchType="exact"
+                  patternValue="/sub-categories"
+                  class="nav-link"
+                  data-tooltip="Sub-categories"
+                  (click)="handleSubCategoriesClick($event)"
+                >
+                  <span class="nav-link-icon">📂</span>
+                  <span class="nav-link-text">Sub-categories</span>
+                  <span class="nav-expand-icon" [class.expanded]="isSubCategoriesExpanded">
+                    {{ isSubCategoriesExpanded ? '▼' : '▶' }}
+                  </span>
+                </a>
+                <ul class="nav-submenu" [class.expanded]="isSubCategoriesExpanded">
+                  <li class="nav-subitem">
+                    <a
+                      routerLink="/sub-categories/manage"
+                      appPatternActive
+                      matchType="startsWith"
+                      patternValue="/sub-categories/manage"
+                      class="nav-sublink"
+                      data-tooltip="Manage Sub-categories"
+                      (click)="closeMobileSidebar()"
+                    >
+                      <span class="nav-sublink-icon">⚙️</span>
+                      <span class="nav-sublink-text">Manage</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
             <li class="nav-item">
-              <a
-                routerLink="/expenses"
-                appPatternActive
-                matchType="exact"
-                patternValue="/expenses"
-                class="nav-link"
-                data-tooltip="Manage Expenses"
-                (click)="closeMobileSidebar()"
-              >
-                <span class="nav-link-icon">💰</span>
-                <span class="nav-link-text">Manage Expenses</span>
-              </a>
+              <div class="nav-parent">
+                <a
+                  routerLink="/expenses"
+                  appPatternActive
+                  matchType="exact"
+                  patternValue="/expenses"
+                  class="nav-link"
+                  data-tooltip="Expenses"
+                  (click)="handleExpensesClick($event)"
+                >
+                  <span class="nav-link-icon">💰</span>
+                  <span class="nav-link-text">Expenses</span>
+                  <span class="nav-expand-icon" [class.expanded]="isExpensesExpanded">
+                    {{ isExpensesExpanded ? '▼' : '▶' }}
+                  </span>
+                </a>
+                <ul class="nav-submenu" [class.expanded]="isExpensesExpanded">
+                  <li class="nav-subitem">
+                    <a
+                      routerLink="/expenses/manage"
+                      appPatternActive
+                      matchType="startsWith"
+                      patternValue="/expenses/manage"
+                      class="nav-sublink"
+                      data-tooltip="Manage Expenses"
+                      (click)="closeMobileSidebar()"
+                    >
+                      <span class="nav-sublink-icon">⚙️</span>
+                      <span class="nav-sublink-text">Manage</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
           </ul>
         </nav>
@@ -99,6 +162,9 @@ import { PatternActiveDirective } from "./app/directives/pattern-active.directiv
 export class App {
   isSidebarCollapsed = false;
   isMobileSidebarOpen = false;
+  isCategoriesExpanded = false;
+  isSubCategoriesExpanded = false;
+  isExpensesExpanded = false;
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
@@ -110,6 +176,63 @@ export class App {
 
   closeMobileSidebar() {
     this.isMobileSidebarOpen = false;
+  }
+
+  handleCategoriesClick(event: Event) {
+    // Check if the click was on the expand icon
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Close other submenus when opening this one
+      this.isSubCategoriesExpanded = false;
+      this.isExpensesExpanded = false;
+      this.isCategoriesExpanded = !this.isCategoriesExpanded;
+    } else {
+      // If clicking on the main link, navigate normally and close all submenus
+      this.closeAllSubmenus();
+      this.closeMobileSidebar();
+    }
+  }
+
+  handleSubCategoriesClick(event: Event) {
+    // Check if the click was on the expand icon
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Close other submenus when opening this one
+      this.isCategoriesExpanded = false;
+      this.isExpensesExpanded = false;
+      this.isSubCategoriesExpanded = !this.isSubCategoriesExpanded;
+    } else {
+      // If clicking on the main link, navigate normally and close all submenus
+      this.closeAllSubmenus();
+      this.closeMobileSidebar();
+    }
+  }
+
+  handleExpensesClick(event: Event) {
+    // Check if the click was on the expand icon
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Close other submenus when opening this one
+      this.isCategoriesExpanded = false;
+      this.isSubCategoriesExpanded = false;
+      this.isExpensesExpanded = !this.isExpensesExpanded;
+    } else {
+      // If clicking on the main link, navigate normally and close all submenus
+      this.closeAllSubmenus();
+      this.closeMobileSidebar();
+    }
+  }
+
+  private closeAllSubmenus() {
+    this.isCategoriesExpanded = false;
+    this.isSubCategoriesExpanded = false;
+    this.isExpensesExpanded = false;
   }
 }
 

@@ -1,6 +1,8 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { Router, ActivatedRoute } from "@angular/router";
+import { Subscription } from "rxjs";
 import { Category } from "../models/category.model";
 import { CategoryService } from "../services/category.service";
 
@@ -11,16 +13,26 @@ import { CategoryService } from "../services/category.service";
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Manage Categories</h1>
-        <button class="btn btn-primary" (click)="showAddForm()">
-          Add Category
-        </button>
+        <h1>{{ getPageTitle() }}</h1>
+        <div class="header-actions" *ngIf="isManageView()">
+          <button 
+            *ngIf="currentView === 'list'" 
+            class="btn btn-primary" 
+            (click)="showAddForm()">
+            Add Category
+          </button>
+          <button 
+            *ngIf="currentView === 'form'" 
+            class="btn btn-secondary" 
+            (click)="showListView()">
+            Back to List
+          </button>
+        </div>
       </div>
 
       <!-- Add/Edit Form -->
-      <div class="form-container" *ngIf="showForm">
+      <div class="form-container" *ngIf="currentView === 'form'">
         <div class="form-card">
-          <h2>{{ isEditing ? "Edit Category" : "Add Category" }}</h2>
           <form (ngSubmit)="onSubmit()" #categoryForm="ngForm">
             <div class="form-group">
               <label for="name">Name:</label>
@@ -81,14 +93,14 @@ import { CategoryService } from "../services/category.service";
       </div>
 
       <!-- Categories Table -->
-      <div class="table-container" *ngIf="!showForm">
+      <div class="table-container" *ngIf="currentView === 'list'">
         <table class="data-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Name</th>
               <th>Description</th>
-              <th>Actions</th>
+              <th *ngIf="isManageView()">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -96,7 +108,7 @@ import { CategoryService } from "../services/category.service";
               <td>{{ category.id }}</td>
               <td>{{ category.name }}</td>
               <td>{{ category.description }}</td>
-              <td class="actions">
+              <td class="actions" *ngIf="isManageView()">
                 <button
                   class="btn btn-sm btn-edit"
                   (click)="editCategory(category)"
@@ -251,12 +263,6 @@ import { CategoryService } from "../services/category.service";
         border: 1px solid #e0e0e0;
       }
 
-      .form-card h2 {
-        margin-bottom: 25px;
-        color: #333;
-        font-size: 24px;
-        font-weight: 600;
-      }
 
       .form-group {
         margin-bottom: 20px;
@@ -375,6 +381,10 @@ import { CategoryService } from "../services/category.service";
       }
 
       @media (max-width: 768px) {
+        .page-container {
+          padding-top: 80px; /* Add top padding to prevent nav bar overlap */
+        }
+
         .page-header {
           flex-direction: column;
           gap: 15px;
@@ -407,23 +417,59 @@ import { CategoryService } from "../services/category.service";
     `,
   ],
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent implements OnInit, OnDestroy {
   categories: Category[] = [];
-  showForm = false;
+  currentView: 'list' | 'form' = 'list';
   isEditing = false;
   showDeleteModal = false;
   categoryToDelete: Category | null = null;
   editingCategoryId: number | null = null;
+  private routeSubscription: Subscription = new Subscription();
 
   currentCategory: Partial<Category> = {
     name: "",
     description: "",
   };
 
-  constructor(private categoryService: CategoryService) {}
+  constructor(
+    private categoryService: CategoryService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
     this.loadCategories();
+    this.updateViewBasedOnRoute();
+    
+    // Subscribe to route changes
+    this.routeSubscription = this.router.events.subscribe(() => {
+      this.updateViewBasedOnRoute();
+    });
+  }
+
+  ngOnDestroy() {
+    this.routeSubscription.unsubscribe();
+  }
+
+  private updateViewBasedOnRoute() {
+    const currentUrl = this.router.url;
+    if (currentUrl.includes('/manage')) {
+      this.currentView = 'list'; // Show list view in manage mode
+    } else {
+      this.currentView = 'list'; // Show read-only list view
+    }
+  }
+
+  isManageView(): boolean {
+    return this.router.url.includes('/manage');
+  }
+
+  getPageTitle(): string {
+    if (this.isManageView()) {
+      return this.currentView === 'list' ? 'Manage Categories' : (this.isEditing ? 'Edit Category' : 'Add Category');
+    } else {
+      return 'Categories';
+    }
   }
 
   loadCategories() {
@@ -438,14 +484,21 @@ export class CategoriesComponent implements OnInit {
   }
 
   showAddForm() {
-    this.showForm = true;
+    this.currentView = 'form';
+    this.isEditing = false;
+    this.editingCategoryId = null;
+    this.currentCategory = { name: "", description: "" };
+  }
+
+  showListView() {
+    this.currentView = 'list';
     this.isEditing = false;
     this.editingCategoryId = null;
     this.currentCategory = { name: "", description: "" };
   }
 
   editCategory(category: Category) {
-    this.showForm = true;
+    this.currentView = 'form';
     this.isEditing = true;
     this.editingCategoryId = category.id;
     this.currentCategory = {
@@ -488,7 +541,7 @@ export class CategoriesComponent implements OnInit {
   }
 
   cancelForm() {
-    this.showForm = false;
+    this.currentView = 'list';
     this.isEditing = false;
     this.editingCategoryId = null;
     this.currentCategory = { name: "", description: "" };

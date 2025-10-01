@@ -62,21 +62,24 @@ export class PatternActiveDirective implements OnInit, OnDestroy {
   }
 
   private addExpandedToChildren() {
-    const element = this.elementRef.nativeElement;
-    const parent = element.parentElement;
-    const children = parent?.querySelectorAll("ul, .nav-expand-icon");
-    children.forEach((child: Element) => {
-      this.renderer.addClass(child, "expanded");
-    });
+    // This prevents auto-opening when parent link is active
+    // const element = this.elementRef.nativeElement;
+    // const parent = element.parentElement;
+    // const children = parent?.querySelectorAll("ul, .nav-expand-icon");
+    // children.forEach((child: Element) => {
+    //   this.renderer.addClass(child, "expanded");
+    // });
   }
 
   private removeExpandedFromChildren() {
-    const element = this.elementRef.nativeElement;
-    const parent = element.parentElement;
-    const children = parent?.querySelectorAll("ul, .nav-expand-icon");
-    children.forEach((child: Element) => {
-      this.renderer.removeClass(child, "expanded");
-    });
+ 
+    // This prevents auto-closing when parent link is not active
+    // const element = this.elementRef.nativeElement;
+    // const parent = element.parentElement;
+    // const children = parent?.querySelectorAll("ul, .nav-expand-icon");
+    // children.forEach((child: Element) => {
+    //   this.renderer.removeClass(child, "expanded");
+    // });
   }
 
   private isPatternMatch(

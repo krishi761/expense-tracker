@@ -1,42 +1,45 @@
 # Expense Tracker
 
-with following menu items :
-
-- **Manage Categories**
-- **Manage Sub-categories**
-- **Manage Expenses**
+- **RESTful API**: Clean, RESTful endpoints for all operations
+- **Entity Framework Core**: Code-first database approach with migrations
+- **SQLite Database**: Lightweight, file-based database for easy deployment
+- **DTOs**: Data Transfer Objects for clean API contracts
+- **CORS Support**: Cross-origin resource sharing for frontend integration
 
 ## Tech Stack
 
 ### Frontend
 
-- Angular 20
-- TypeScript
-- RxJS
-- CSS
+- **Angular 20** - Modern web framework
+- **TypeScript** - Type-safe JavaScript
+- **RxJS** - Reactive programming
+- **CSS3** - Styling and responsive design
 
 ### Backend
 
-- .NET 9 Web API
-- Entity Framework Core 9
-- SQLite Database
+- **.NET 9** - Latest .NET framework
+- **Entity Framework Core 9** - ORM for database operations
+- **SQLite** - Embedded database
+- **Swagger/OpenAPI** - API documentation
 
-## Prerequisites
+## 📋 Prerequisites
 
-- Node.js (v18 or higher)
-- .NET 9 SDK
-- Angular CLI (`npm install -g @angular/cli`)
+Before running this application, ensure you have the following installed:
 
-## Setup Instructions
+- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+- **.NET 9 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/9.0)
+- **Angular CLI** - Install globally with `npm install -g @angular/cli`
+
+## 🛠️ Setup Instructions
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone <your-repository-url>
 cd expense-tracker
 ```
 
-### 2. Backend Setup (.NET API)
+### 2. Backend Setup (.NET Web API)
 
 1. Navigate to the API directory:
 
@@ -50,22 +53,23 @@ cd expense-tracker
    dotnet restore
    ```
 
-3. Run database migrations (this will create the SQLite database):
+3. Run database migrations (creates the SQLite database):
 
    ```bash
    dotnet ef database update
    ```
 
-4. Run the API:
+4. Start the API server:
+
    ```bash
    dotnet run
    ```
 
-The API will start on `http://localhost:8000`.
+   The API will be available at `http://localhost:8000`
 
 ### 3. Frontend Setup (Angular)
 
-1. Navigate back to the project root directory:
+1. Navigate back to the project root:
 
    ```bash
    cd ..
@@ -78,60 +82,38 @@ The API will start on `http://localhost:8000`.
    ```
 
 3. Start the development server:
+
    ```bash
    npm start
    ```
 
-The Angular app will start on `http://localhost:4200`.
+   The Angular app will be available at `http://localhost:4200`
 
-## API Endpoints
+## The API includes Swagger documentation available at `http://localhost:8000/swagger` when the backend is running.
 
-### Categories
+## Usage Guide
 
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/{id}` - Get category by ID
-- `POST /api/categories` - Create new category
-- `PUT /api/categories/{id}` - Update category
-- `DELETE /api/categories/{id}` - Delete category
+### Navigation
 
-### Sub-categories
+- **Menu Items**: Click to view read-only lists (Categories, Sub-categories, Expenses)
+- **Manage Submenu**: Click to access full management interface with add/edit/delete functionality
+- **Expand/Collapse**: Click the arrow icons to expand/collapse submenus
+- **Mobile Navigation**: Use the hamburger menu on mobile devices
 
-- `GET /api/subcategories` - Get all sub-categories with category names
-- `GET /api/subcategories/{id}` - Get sub-category by ID
-- `GET /api/subcategories/ByCategory/{categoryId}` - Get sub-categories by category
-- `POST /api/subcategories` - Create new sub-category
-- `PUT /api/subcategories/{id}` - Update sub-category
-- `DELETE /api/subcategories/{id}` - Delete sub-category
+### Managing Data
 
-### Expenses
+1. **View Data**: Navigate to main menu items to see read-only lists
+2. **Add New Items**: Go to "Manage" submenu and click "Add" buttons
+3. **Edit Items**: Click "Edit" button in the Actions column
+4. **Delete Items**: Click "Delete" button and confirm in the modal dialog
 
-- `GET /api/expenses` - Get all expenses with category and sub-category names
-- `GET /api/expenses/{id}` - Get expense by ID
-- `POST /api/expenses` - Create new expense
-- `PUT /api/expenses/{id}` - Update expense
-- `DELETE /api/expenses/{id}` - Delete expense
+##
 
-## Database Schema
+- Built with Angular 20 and .NET 9
+- Uses Entity Framework Core for data access
+- SQLite for lightweight database storage
+- Modern responsive design principles
 
-### Categories Table
+---
 
-- `Id` (INTEGER, Primary Key, Auto Increment)
-- `Name` (TEXT, Required)
-- `Description` (TEXT, Required)
-
-### SubCategories Table
-
-- `Id` (INTEGER, Primary Key, Auto Increment)
-- `Name` (TEXT, Required)
-- `Description` (TEXT, Required)
-- `CategoryId` (INTEGER, Foreign Key to Categories)
-
-### Expenses Table
-
-- `Id` (INTEGER, Primary Key, Auto Increment)
-- `Name` (TEXT, Required)
-- `Description` (TEXT, Required)
-- `Amount` (DECIMAL(18,2), Required)
-- `Date` (TEXT, Required) - Displayed in dd/MM/yyyy format
-- `CategoryId` (INTEGER, Foreign Key to Categories)
-- `SubCategoryId` (INTEGER, Foreign Key to SubCategories)
+**Happy Expense Tracking! 💰**

@@ -1,6 +1,8 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { Router, ActivatedRoute } from "@angular/router";
+import { Subscription } from "rxjs";
 import { SubCategory } from "../models/sub-category.model";
 import { Category } from "../models/category.model";
 import { SubCategoryService } from "../services/sub-category.service";
@@ -13,16 +15,26 @@ import { CategoryService } from "../services/category.service";
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Manage Sub-categories</h1>
-        <button class="btn btn-primary" (click)="showAddForm()">
-          Add Sub-category
-        </button>
+        <h1>{{ getPageTitle() }}</h1>
+        <div class="header-actions" *ngIf="isManageView()">
+          <button 
+            *ngIf="currentView === 'list'" 
+            class="btn btn-primary" 
+            (click)="showAddForm()">
+            Add Sub-category
+          </button>
+          <button 
+            *ngIf="currentView === 'form'" 
+            class="btn btn-secondary" 
+            (click)="showListView()">
+            Back to List
+          </button>
+        </div>
       </div>
 
       <!-- Add/Edit Form -->
-      <div class="form-container" *ngIf="showForm">
+      <div class="form-container" *ngIf="currentView === 'form'">
         <div class="form-card">
-          <h2>{{ isEditing ? "Edit Sub-category" : "Add Sub-category" }}</h2>
           <form (ngSubmit)="onSubmit()" #subCategoryForm="ngForm">
             <div class="form-group">
               <label for="name">Name:</label>
@@ -109,7 +121,7 @@ import { CategoryService } from "../services/category.service";
       </div>
 
       <!-- Sub-categories Table -->
-      <div class="table-container" *ngIf="!showForm">
+      <div class="table-container" *ngIf="currentView === 'list'">
         <table class="data-table">
           <thead>
             <tr>
@@ -117,7 +129,7 @@ import { CategoryService } from "../services/category.service";
               <th>Name</th>
               <th>Description</th>
               <th>Category</th>
-              <th>Actions</th>
+              <th *ngIf="isManageView()">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +138,7 @@ import { CategoryService } from "../services/category.service";
               <td>{{ subCategory.name }}</td>
               <td>{{ subCategory.description }}</td>
               <td>{{ subCategory.categoryName }}</td>
-              <td class="actions">
+              <td class="actions" *ngIf="isManageView()">
                 <button
                   class="btn btn-sm btn-edit"
                   (click)="editSubCategory(subCategory)"
@@ -192,6 +204,11 @@ import { CategoryService } from "../services/category.service";
         margin: 0;
         font-size: 28px;
         font-weight: 600;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
       }
 
       .btn {
@@ -276,12 +293,6 @@ import { CategoryService } from "../services/category.service";
         border: 1px solid #e0e0e0;
       }
 
-      .form-card h2 {
-        margin-bottom: 25px;
-        color: #333;
-        font-size: 24px;
-        font-weight: 600;
-      }
 
       .form-group {
         margin-bottom: 20px;
@@ -400,6 +411,10 @@ import { CategoryService } from "../services/category.service";
       }
 
       @media (max-width: 768px) {
+        .page-container {
+          padding-top: 80px; /* Add top padding to prevent nav bar overlap */
+        }
+
         .page-header {
           flex-direction: column;
           gap: 15px;
@@ -432,13 +447,14 @@ import { CategoryService } from "../services/category.service";
     `,
   ],
 })
-export class SubCategoriesComponent implements OnInit {
+export class SubCategoriesComponent implements OnInit, OnDestroy {
   subCategories: SubCategory[] = [];
   categories: Category[] = [];
-  showForm = false;
+  currentView: 'list' | 'form' = 'list';
   isEditing = false;
   showDeleteModal = false;
   subCategoryToDelete: SubCategory | null = null;
+  private routeSubscription: Subscription = new Subscription();
 
   currentSubCategory: Omit<SubCategory, "id"> & { id?: number } = {
     name: "",
@@ -448,7 +464,9 @@ export class SubCategoriesComponent implements OnInit {
 
   constructor(
     private subCategoryService: SubCategoryService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -461,10 +479,52 @@ export class SubCategoriesComponent implements OnInit {
       .subscribe((subCategories) => {
         this.subCategories = subCategories;
       });
+
+    this.updateViewBasedOnRoute();
+    
+    // Subscribe to route changes
+    this.routeSubscription = this.router.events.subscribe(() => {
+      this.updateViewBasedOnRoute();
+    });
+  }
+
+  ngOnDestroy() {
+    this.routeSubscription.unsubscribe();
+  }
+
+  private updateViewBasedOnRoute() {
+    const currentUrl = this.router.url;
+    if (currentUrl.includes('/manage')) {
+      this.currentView = 'list'; // Show list view in manage mode
+    } else {
+      this.currentView = 'list'; // Show read-only list view
+    }
+  }
+
+  isManageView(): boolean {
+    return this.router.url.includes('/manage');
+  }
+
+  getPageTitle(): string {
+    if (this.isManageView()) {
+      return this.currentView === 'list' ? 'Manage Sub-categories' : (this.isEditing ? 'Edit Sub-category' : 'Add Sub-category');
+    } else {
+      return 'Sub-categories';
+    }
   }
 
   showAddForm() {
-    this.showForm = true;
+    this.currentView = 'form';
+    this.isEditing = false;
+    this.currentSubCategory = {
+      name: "",
+      description: "",
+      categoryId: null as any,
+    };
+  }
+
+  showListView() {
+    this.currentView = 'list';
     this.isEditing = false;
     this.currentSubCategory = {
       name: "",
@@ -474,7 +534,7 @@ export class SubCategoriesComponent implements OnInit {
   }
 
   editSubCategory(subCategory: SubCategory) {
-    this.showForm = true;
+    this.currentView = 'form';
     this.isEditing = true;
     this.currentSubCategory = {
       name: subCategory.name,
@@ -536,7 +596,7 @@ export class SubCategoriesComponent implements OnInit {
   }
 
   cancelForm() {
-    this.showForm = false;
+    this.currentView = 'list';
     this.isEditing = false;
     this.currentSubCategory = {
       name: "",

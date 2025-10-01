@@ -5,7 +5,10 @@ import { ExpensesComponent } from "./expenses/expenses.component";
 
 export const routes: Routes = [
   { path: "categories", component: CategoriesComponent },
+  { path: "categories/manage", component: CategoriesComponent },
   { path: "sub-categories", component: SubCategoriesComponent },
+  { path: "sub-categories/manage", component: SubCategoriesComponent },
   { path: "expenses", component: ExpensesComponent },
+  { path: "expenses/manage", component: ExpensesComponent },
   { path: "", redirectTo: "/categories", pathMatch: "full" },
 ];
