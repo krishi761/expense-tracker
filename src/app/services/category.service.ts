@@ -22,25 +22,7 @@ export class CategoryService {
       error: (error) => {
         console.error("Failed to load categories:", error);
         console.error("Error details:", error.message, error.status);
-        // Load some default data when API is not available
-        const defaultCategories: Category[] = [
-          {
-            id: 1,
-            name: "Food & Dining",
-            description: "Restaurants, groceries, and food-related expenses",
-          },
-          {
-            id: 2,
-            name: "Transportation",
-            description: "Car, gas, public transport, and travel expenses",
-          },
-          {
-            id: 3,
-            name: "Entertainment",
-            description: "Movies, games, and recreational activities",
-          },
-        ];
-        this.categoriesSubject.next(defaultCategories);
+        this.categoriesSubject.next([]);
       },
     });
   }

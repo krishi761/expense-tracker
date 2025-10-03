@@ -38,6 +38,7 @@ body {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
+  padding-left: 60px;
 }
 
 .header-actions {
@@ -391,6 +392,7 @@ body {
 
   .header-title {
     font-size: 18px;
+    padding: 0;
   }
 
   .header-actions {

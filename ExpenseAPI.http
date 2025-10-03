@@ -1,0 +1,284 @@
+### Expense Tracker API - HTTP Test File
+### Use this file to test all API endpoints
+### Make sure the API is running on http://localhost:8000
+
+@baseUrl = http://localhost:8000
+@contentType = application/json
+
+### ===========================================
+### CATEGORIES ENDPOINTS
+### ===========================================
+
+### Get all categories
+GET {{baseUrl}}/api/categories
+Accept: {{contentType}}
+
+### Get category by ID
+GET {{baseUrl}}/api/categories/1
+Accept: {{contentType}}
+
+### Create a new category
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "Healthcare",
+  "description": "Medical and health-related expenses"
+}
+
+### Update a category
+PUT {{baseUrl}}/api/categories/1
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Healthcare",
+  "description": "Updated medical and health-related expenses"
+}
+
+### Delete a category
+DELETE {{baseUrl}}/api/categories/1
+
+### ===========================================
+### SUBCATEGORIES ENDPOINTS
+### ===========================================
+
+### Get all subcategories
+GET {{baseUrl}}/api/subcategories
+Accept: {{contentType}}
+
+### Get subcategory by ID
+GET {{baseUrl}}/api/subcategories/1
+Accept: {{contentType}}
+
+### Create a new subcategory
+POST {{baseUrl}}/api/subcategories
+Content-Type: {{contentType}}
+
+{
+  "name": "Doctor Visits",
+  "description": "Regular doctor appointments and consultations",
+  "categoryId": 1
+}
+
+### Update a subcategory
+PUT {{baseUrl}}/api/subcategories/1
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Doctor Visits",
+  "description": "Updated regular doctor appointments",
+  "categoryId": 1
+}
+
+### Delete a subcategory
+DELETE {{baseUrl}}/api/subcategories/1
+
+### ===========================================
+### EXPENSES ENDPOINTS
+### ===========================================
+
+### Get all expenses
+GET {{baseUrl}}/api/expenses
+Accept: {{contentType}}
+
+### Get expense by ID
+GET {{baseUrl}}/api/expenses/1
+Accept: {{contentType}}
+
+### Create a new expense
+POST {{baseUrl}}/api/expenses
+Content-Type: {{contentType}}
+
+{
+  "name": "Monthly Checkup",
+  "description": "Regular health checkup appointment",
+  "amount": 150.00,
+  "date": "2024-01-15T00:00:00",
+  "categoryId": 1,
+  "subCategoryId": 1
+}
+
+### Update an expense
+PUT {{baseUrl}}/api/expenses/1
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Monthly Checkup",
+  "description": "Updated regular health checkup",
+  "amount": 175.00,
+  "date": "2024-01-15T00:00:00",
+  "categoryId": 1,
+  "subCategoryId": 1
+}
+
+### Delete an expense
+DELETE {{baseUrl}}/api/expenses/1
+
+### ===========================================
+### SAMPLE DATA CREATION
+### ===========================================
+
+### Create sample categories for testing
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "Food & Dining",
+  "description": "Restaurants, groceries, and food-related expenses"
+}
+
+###
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "Transportation",
+  "description": "Car, gas, public transport, and travel expenses"
+}
+
+###
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "Entertainment",
+  "description": "Movies, games, and recreational activities"
+}
+
+### Create sample subcategories
+POST {{baseUrl}}/api/subcategories
+Content-Type: {{contentType}}
+
+{
+  "name": "Restaurants",
+  "description": "Dining out at restaurants",
+  "categoryId": 1
+}
+
+###
+POST {{baseUrl}}/api/subcategories
+Content-Type: {{contentType}}
+
+{
+  "name": "Groceries",
+  "description": "Food shopping and groceries",
+  "categoryId": 1
+}
+
+###
+POST {{baseUrl}}/api/subcategories
+Content-Type: {{contentType}}
+
+{
+  "name": "Gas",
+  "description": "Fuel for vehicles",
+  "categoryId": 2
+}
+
+###
+POST {{baseUrl}}/api/subcategories
+Content-Type: {{contentType}}
+
+{
+  "name": "Movies",
+  "description": "Cinema and movie tickets",
+  "categoryId": 3
+}
+
+### Create sample expenses
+POST {{baseUrl}}/api/expenses
+Content-Type: {{contentType}}
+
+{
+  "name": "Lunch at Pizza Place",
+  "description": "Team lunch meeting",
+  "amount": 45.50,
+  "date": "2024-01-15T00:00:00",
+  "categoryId": 1,
+  "subCategoryId": 1
+}
+
+###
+POST {{baseUrl}}/api/expenses
+Content-Type: {{contentType}}
+
+{
+  "name": "Weekly Groceries",
+  "description": "Grocery shopping for the week",
+  "amount": 120.75,
+  "date": "2024-01-14T00:00:00",
+  "categoryId": 1,
+  "subCategoryId": 2
+}
+
+###
+POST {{baseUrl}}/api/expenses
+Content-Type: {{contentType}}
+
+{
+  "name": "Gas Fill-up",
+  "description": "Full tank of gas",
+  "amount": 65.00,
+  "date": "2024-01-13T00:00:00",
+  "categoryId": 2,
+  "subCategoryId": 3
+}
+
+### ===========================================
+### ERROR TESTING
+### ===========================================
+
+### Test invalid category ID
+GET {{baseUrl}}/api/categories/999
+Accept: {{contentType}}
+
+### Test invalid request body
+POST {{baseUrl}}/api/categories
+Content-Type: {{contentType}}
+
+{
+  "name": "",
+  "description": "This should fail validation"
+}
+
+### Test invalid date format
+POST {{baseUrl}}/api/expenses
+Content-Type: {{contentType}}
+
+{
+  "name": "Invalid Date Test",
+  "description": "Testing invalid date format",
+  "amount": 50.00,
+  "date": "invalid-date",
+  "categoryId": 1,
+  "subCategoryId": 1
+}
+
+### ===========================================
+### HEALTH CHECK
+### ===========================================
+
+### Test if API is running
+GET {{baseUrl}}/api/categories
+Accept: {{contentType}}
+
+### ===========================================
+### NOTES
+### ===========================================
+
+### How to use this file:
+### 1. Make sure the API is running: dotnet run (in ExpenseAPI folder)
+### 2. Use VS Code with REST Client extension
+### 3. Or use IntelliJ IDEA with HTTP Client
+### 4. Or use any HTTP client like Postman, Insomnia, etc.
+### 5. Click "Send Request" above any endpoint to test it
+### 6. Modify the data in request bodies as needed
+### 7. Check the response to verify the API is working correctly
+
+### Expected Response Codes:
+### - 200 OK: Successful GET/PUT requests
+### - 201 Created: Successful POST requests  
+### - 204 No Content: Successful DELETE requests
+### - 400 Bad Request: Invalid request data
+### - 404 Not Found: Resource not found
+### - 500 Internal Server Error: Server error

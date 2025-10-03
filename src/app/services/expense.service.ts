@@ -15,8 +15,15 @@ export class ExpenseService {
   }
 
   private loadExpenses(): void {
-    this.http.get<Expense[]>(this.apiUrl).subscribe((expenses) => {
-      this.expensesSubject.next(expenses);
+    this.http.get<Expense[]>(this.apiUrl).subscribe({
+      next: (expenses) => {
+        this.expensesSubject.next(expenses);
+      },
+      error: (error) => {
+        console.error("Failed to load expenses:", error);
+        console.error("Error details:", error.message, error.status);
+        this.expensesSubject.next([]);
+      },
     });
   }
 

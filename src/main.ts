@@ -178,55 +178,45 @@ export class App {
     this.isMobileSidebarOpen = false;
   }
 
-  handleCategoriesClick(event: Event) {
+  handleMenuClick(event: Event, menuType: 'categories' | 'subCategories' | 'expenses') {
     // Check if the click was on the expand icon
     const target = event.target as HTMLElement;
     if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
       event.preventDefault();
       event.stopPropagation();
+      
       // Close other submenus when opening this one
-      this.isSubCategoriesExpanded = false;
-      this.isExpensesExpanded = false;
-      this.isCategoriesExpanded = !this.isCategoriesExpanded;
+      this.closeAllSubmenus();
+      
+      // Toggle the clicked menu
+      switch (menuType) {
+        case 'categories':
+          this.isCategoriesExpanded = !this.isCategoriesExpanded;
+          break;
+        case 'subCategories':
+          this.isSubCategoriesExpanded = !this.isSubCategoriesExpanded;
+          break;
+        case 'expenses':
+          this.isExpensesExpanded = !this.isExpensesExpanded;
+          break;
+      }
     } else {
       // If clicking on the main link, navigate normally and close all submenus
       this.closeAllSubmenus();
       this.closeMobileSidebar();
     }
+  }
+
+  handleCategoriesClick(event: Event) {
+    this.handleMenuClick(event, 'categories');
   }
 
   handleSubCategoriesClick(event: Event) {
-    // Check if the click was on the expand icon
-    const target = event.target as HTMLElement;
-    if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Close other submenus when opening this one
-      this.isCategoriesExpanded = false;
-      this.isExpensesExpanded = false;
-      this.isSubCategoriesExpanded = !this.isSubCategoriesExpanded;
-    } else {
-      // If clicking on the main link, navigate normally and close all submenus
-      this.closeAllSubmenus();
-      this.closeMobileSidebar();
-    }
+    this.handleMenuClick(event, 'subCategories');
   }
 
   handleExpensesClick(event: Event) {
-    // Check if the click was on the expand icon
-    const target = event.target as HTMLElement;
-    if (target.classList.contains('nav-expand-icon') || target.closest('.nav-expand-icon')) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Close other submenus when opening this one
-      this.isCategoriesExpanded = false;
-      this.isSubCategoriesExpanded = false;
-      this.isExpensesExpanded = !this.isExpensesExpanded;
-    } else {
-      // If clicking on the main link, navigate normally and close all submenus
-      this.closeAllSubmenus();
-      this.closeMobileSidebar();
-    }
+    this.handleMenuClick(event, 'expenses');
   }
 
   private closeAllSubmenus() {

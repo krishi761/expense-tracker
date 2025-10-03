@@ -21,12 +21,6 @@ import { CategoryService } from "../services/category.service";
             (click)="showAddForm()">
             Add Category
           </button>
-          <button 
-            *ngIf="currentView === 'form'" 
-            class="btn btn-secondary" 
-            (click)="showListView()">
-            Back to List
-          </button>
         </div>
       </div>
 

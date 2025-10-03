@@ -25,12 +25,6 @@ import { SubCategoryService } from "../services/sub-category.service";
             (click)="showAddForm()">
             Add Expense
           </button>
-          <button 
-            *ngIf="currentView === 'form'" 
-            class="btn btn-secondary" 
-            (click)="showListView()">
-            Back to List
-          </button>
         </div>
       </div>
 

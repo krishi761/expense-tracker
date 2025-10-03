@@ -3,6 +3,7 @@ using System;
 using ExpenseAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -11,83 +12,71 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExpenseAPI.Migrations
 {
     [DbContext(typeof(ExpenseDbContext))]
-    [Migration("20250924193734_InitialCreate")]
+    [Migration("20251003075524_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("ExpenseAPI.Models.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Restaurants, groceries, and food-related expenses",
-                            Name = "Food & Dining"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Car, gas, public transport, and travel expenses",
-                            Name = "Transportation"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Movies, games, and recreational activities",
-                            Name = "Entertainment"
-                        });
                 });
 
             modelBuilder.Entity("ExpenseAPI.Models.Expense", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("SubCategoryId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -96,94 +85,34 @@ namespace ExpenseAPI.Migrations
                     b.HasIndex("SubCategoryId");
 
                     b.ToTable("Expenses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Amount = 45.50m,
-                            CategoryId = 1,
-                            Date = new DateTime(2024, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Team lunch meeting",
-                            Name = "Lunch at Pizza Place",
-                            SubCategoryId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Amount = 120.75m,
-                            CategoryId = 1,
-                            Date = new DateTime(2024, 1, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Grocery shopping for the week",
-                            Name = "Weekly Groceries",
-                            SubCategoryId = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Amount = 65.00m,
-                            CategoryId = 2,
-                            Date = new DateTime(2024, 1, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Full tank of gas",
-                            Name = "Gas Fill-up",
-                            SubCategoryId = 3
-                        });
                 });
 
             modelBuilder.Entity("ExpenseAPI.Models.SubCategory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
                     b.ToTable("SubCategories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CategoryId = 1,
-                            Description = "Dining out at restaurants",
-                            Name = "Restaurants"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CategoryId = 1,
-                            Description = "Food shopping and groceries",
-                            Name = "Groceries"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CategoryId = 2,
-                            Description = "Fuel for vehicles",
-                            Name = "Gas"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CategoryId = 3,
-                            Description = "Cinema and movie tickets",
-                            Name = "Movies"
-                        });
                 });
 
             modelBuilder.Entity("ExpenseAPI.Models.Expense", b =>

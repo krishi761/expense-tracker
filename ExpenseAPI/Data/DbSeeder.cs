@@ -9,41 +9,37 @@ namespace ExpenseAPI.Data
         {
             try
             {
-                // Check if database already has data
                 if (context.Categories.Any())
                 {
-                    return; // Database has been seeded
+                    return;
                 }
-
-                // Seed Categories
+  
                 var categories = new List<Category>
                 {
-                    new Category { Id = 1, Name = "Food & Dining", Description = "Restaurants, groceries, and food-related expenses" },
-                    new Category { Id = 2, Name = "Transportation", Description = "Car, gas, public transport, and travel expenses" },
-                    new Category { Id = 3, Name = "Entertainment", Description = "Movies, games, and recreational activities" }
+                    new Category { Name = "Food & Dining", Description = "Restaurants, groceries, and food-related expenses" },
+                    new Category { Name = "Transportation", Description = "Car, gas, public transport, and travel expenses" },
+                    new Category { Name = "Entertainment", Description = "Movies, games, and recreational activities" }
                 };
 
                 context.Categories.AddRange(categories);
                 context.SaveChanges();
 
-                // Seed SubCategories
                 var subCategories = new List<SubCategory>
                 {
-                    new SubCategory { Id = 1, Name = "Restaurants", Description = "Dining out at restaurants", CategoryId = 1 },
-                    new SubCategory { Id = 2, Name = "Groceries", Description = "Food shopping and groceries", CategoryId = 1 },
-                    new SubCategory { Id = 3, Name = "Gas", Description = "Fuel for vehicles", CategoryId = 2 },
-                    new SubCategory { Id = 4, Name = "Movies", Description = "Cinema and movie tickets", CategoryId = 3 }
+                    new SubCategory { Name = "Restaurants", Description = "Dining out at restaurants", CategoryId = categories[0].Id },
+                    new SubCategory { Name = "Groceries", Description = "Food shopping and groceries", CategoryId = categories[0].Id },
+                    new SubCategory { Name = "Gas", Description = "Fuel for vehicles", CategoryId = categories[1].Id },
+                    new SubCategory { Name = "Movies", Description = "Cinema and movie tickets", CategoryId = categories[2].Id }
                 };
 
                 context.SubCategories.AddRange(subCategories);
                 context.SaveChanges();
 
-                // Seed Expenses
                 var expenses = new List<Expense>
                 {
-                    new Expense { Id = 1, Name = "Lunch at Pizza Place", Description = "Team lunch meeting", Amount = 45.50m, Date = new DateTime(2024, 1, 15), CategoryId = 1, SubCategoryId = 1 },
-                    new Expense { Id = 2, Name = "Weekly Groceries", Description = "Grocery shopping for the week", Amount = 120.75m, Date = new DateTime(2024, 1, 14), CategoryId = 1, SubCategoryId = 2 },
-                    new Expense { Id = 3, Name = "Gas Fill-up", Description = "Full tank of gas", Amount = 65.00m, Date = new DateTime(2024, 1, 13), CategoryId = 2, SubCategoryId = 3 }
+                    new Expense { Name = "Lunch at Pizza Place", Description = "Team lunch meeting", Amount = 45.50m, Date = new DateTime(2024, 1, 15), CategoryId = categories[0].Id, SubCategoryId = subCategories[0].Id },
+                    new Expense { Name = "Weekly Groceries", Description = "Grocery shopping for the week", Amount = 120.75m, Date = new DateTime(2024, 1, 14), CategoryId = categories[0].Id, SubCategoryId = subCategories[1].Id },
+                    new Expense { Name = "Gas Fill-up", Description = "Full tank of gas", Amount = 65.00m, Date = new DateTime(2024, 1, 13), CategoryId = categories[1].Id, SubCategoryId = subCategories[2].Id }
                 };
 
                 context.Expenses.AddRange(expenses);

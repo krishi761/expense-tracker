@@ -22,6 +22,7 @@ export class SubCategoryService {
       error: (error) => {
         console.error("Failed to load subcategories:", error);
         console.error("Error details:", error.message, error.status);
+        this.subCategoriesSubject.next([]);
       },
     });
   }
