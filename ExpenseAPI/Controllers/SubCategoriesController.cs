@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ExpenseAPI.Data;
 using ExpenseAPI.Models;
 using ExpenseAPI.DTOs;
+using ExpenseAPI.Services;
 
 namespace ExpenseAPI.Controllers
 {
@@ -11,10 +12,17 @@ namespace ExpenseAPI.Controllers
     public class SubCategoriesController : ControllerBase
     {
         private readonly ExpenseDbContext _context;
+        private readonly RedisCacheService _cache;
+        private readonly SqlServerIdentityService _identityService;
 
-        public SubCategoriesController(ExpenseDbContext context)
+        public SubCategoriesController(
+            ExpenseDbContext context,
+            RedisCacheService cache,
+            SqlServerIdentityService identityService)
         {
             _context = context;
+            _cache = cache;
+            _identityService = identityService;
         }
 
         // GET: api/SubCategories
@@ -23,17 +31,19 @@ namespace ExpenseAPI.Controllers
         {
             try
             {
-                return await _context.SubCategories
-                    .Include(sc => sc.Category)
-                    .Select(sc => new
-                    {
-                        sc.Id,
-                        sc.Name,
-                        sc.Description,
-                        sc.CategoryId,
-                        CategoryName = sc.Category.Name
-                    })
-                    .ToListAsync();
+                return await _cache.GetOrCreateAsync(
+                    "subcategories:all",
+                    () => _context.SubCategories
+                        .AsNoTracking()
+                        .Select(sc => new SubCategoryListItemDto
+                        {
+                            Id = sc.Id,
+                            Name = sc.Name,
+                            Description = sc.Description,
+                            CategoryId = sc.CategoryId,
+                            CategoryName = sc.Category.Name
+                        })
+                        .ToListAsync());
             }
             catch (Exception ex)
             {
@@ -70,9 +80,12 @@ namespace ExpenseAPI.Controllers
         {
             try
             {
-                return await _context.SubCategories
-                    .Where(sc => sc.CategoryId == categoryId)
-                    .ToListAsync();
+                return await _cache.GetOrCreateAsync(
+                    $"subcategories:category:{categoryId}",
+                    () => _context.SubCategories
+                        .AsNoTracking()
+                        .Where(sc => sc.CategoryId == categoryId)
+                        .ToListAsync());
             }
             catch (Exception ex)
             {
@@ -99,11 +112,15 @@ namespace ExpenseAPI.Controllers
                     return BadRequest("Invalid CategoryId. Category does not exist.");
                 }
 
+                var previousCategoryId = existingSubCategory.CategoryId;
                 existingSubCategory.Name = updateDto.Name;
                 existingSubCategory.Description = updateDto.Description;
                 existingSubCategory.CategoryId = updateDto.CategoryId;
 
                 await _context.SaveChangesAsync();
+                await InvalidateSubCategoryDataAsync(
+                    previousCategoryId,
+                    updateDto.CategoryId);
                 return NoContent();
             }
             catch (DbUpdateConcurrencyException)
@@ -145,6 +162,7 @@ namespace ExpenseAPI.Controllers
                 
                 _context.SubCategories.Add(subCategory);
                 await _context.SaveChangesAsync();
+                await InvalidateSubCategoryDataAsync(createDto.CategoryId);
 
                 return CreatedAtAction("GetSubCategory", new { id = subCategory.Id }, subCategory);
             }
@@ -166,8 +184,18 @@ namespace ExpenseAPI.Controllers
                     return NotFound();
                 }
 
+                var hasExpenses = await _context.Expenses
+                    .AnyAsync(expense => expense.SubCategoryId == id);
+                if (hasExpenses)
+                {
+                    return Conflict(
+                        "This subcategory cannot be deleted because expenses are linked to it. Reassign or delete those expenses first.");
+                }
+
                 _context.SubCategories.Remove(subCategory);
                 await _context.SaveChangesAsync();
+                await _identityService.ReseedSubCategoriesAsync();
+                await InvalidateSubCategoryDataAsync(subCategory.CategoryId);
 
                 return NoContent();
             }
@@ -180,6 +208,17 @@ namespace ExpenseAPI.Controllers
         private bool SubCategoryExists(int id)
         {
             return _context.SubCategories.Any(e => e.Id == id);
+        }
+
+        private Task InvalidateSubCategoryDataAsync(params int[] categoryIds)
+        {
+            var keys = new List<string>
+            {
+                "subcategories:all",
+                "expenses:all"
+            };
+            keys.AddRange(categoryIds.Distinct().Select(id => $"subcategories:category:{id}"));
+            return _cache.RemoveAsync(keys.ToArray());
         }
     }
 }

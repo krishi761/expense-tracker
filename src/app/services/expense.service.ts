@@ -2,17 +2,16 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { BehaviorSubject, Observable, tap } from "rxjs";
 import { Expense } from "../models/expense.model";
+import { environment } from "../../environments/environment";
 
 @Injectable({
   providedIn: "root",
 })
 export class ExpenseService {
-  private apiUrl = "http://localhost:8000/api/expenses";
+  private apiUrl = `${environment.apiBaseUrl}/expenses`;
   private expensesSubject = new BehaviorSubject<Expense[]>([]);
 
-  constructor(private http: HttpClient) {
-    this.loadExpenses();
-  }
+  constructor(private http: HttpClient) {}
 
   private loadExpenses(): void {
     this.http.get<Expense[]>(this.apiUrl).subscribe({
@@ -31,8 +30,8 @@ export class ExpenseService {
     return this.expensesSubject.asObservable();
   }
 
-  getExpensesWithNames(): Observable<Expense[]> {
-    return this.http.get<Expense[]>(this.apiUrl);
+  getExpensesWithNames(source: "redis" | "sql" = "redis"): Observable<Expense[]> {
+    return this.http.get<Expense[]>(`${this.apiUrl}?source=${source}`);
   }
 
   getExpenseById(id: number): Observable<Expense> {

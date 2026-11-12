@@ -2,12 +2,13 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { BehaviorSubject, Observable, tap } from "rxjs";
 import { Category } from "../models/category.model";
+import { environment } from "../../environments/environment";
 
 @Injectable({
   providedIn: "root",
 })
 export class CategoryService {
-  private apiUrl = "http://localhost:8000/api/categories";
+  private apiUrl = `${environment.apiBaseUrl}/categories`;
   private categoriesSubject = new BehaviorSubject<Category[]>([]);
 
   constructor(private http: HttpClient) {

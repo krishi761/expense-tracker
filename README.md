@@ -23,20 +23,19 @@ A full-stack expense management application built with Angular and .NET Web API.
 
 ### Backend
 
-- **.NET 9** - Latest .NET framework
-- **Entity Framework Core 9** - ORM for database operations
-- **SQL Server** - Enterprise database with Docker support
-- **HTTP Test File** - Pre-configured API testing
+- .NET 10 Web API
+- Entity Framework Core 10
+- SQL Server
+- Redis cache
 
 ## 📋 Prerequisites
 
 Before running this application, ensure you have the following installed:
 
-- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
-- **.NET 9 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/9.0)
-- **Angular CLI** - Install globally with `npm install -g @angular/cli`
-- **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
-- **SQL Server** (via Docker) - Instructions below
+- Node.js (v18 or higher)
+- .NET 10 SDK
+- Angular CLI (`npm install -g @angular/cli`)
+- A SQL Server instance and an Azure Managed Redis instance (or another Redis-compatible server)
 
 ## 🛠️ Setup Instructions
 
@@ -47,243 +46,174 @@ git clone https://github.com/krishi761/expense-tracker.git
 cd expense-tracker
 ```
 
-### 2. Database Setup (SQL Server with Docker)
+### 2. Configure development secrets
 
-#### Option A: Using Docker (Recommended)
+The API uses .NET User Secrets locally. From `ExpenseAPI`, set the SQL Server and Redis values without committing them:
 
-1. **Start SQL Server in Docker:**
-
-   ```bash
-   docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Password.1" \
-      -p 1433:1433 --name sqlserver \
-      -d mcr.microsoft.com/mssql/server:2022-latest
-   ```
-
-2. **Verify SQL Server is running:**
-
-   ```bash
-   docker ps
-   ```
-
-   You should see the SQL Server container running on port 1433.
-
-#### Option B: Using Local SQL Server Installation
-
-If you have SQL Server installed locally, update the connection string in `ExpenseAPI/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=ExpenseDb;Integrated Security=true;TrustServerCertificate=True;"
-  }
-}
+```bash
+cd ExpenseAPI
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "YOUR_SQL_SERVER_CONNECTION_STRING"
+dotnet user-secrets set "ConnectionStrings:Redis" "localhost:6379"
 ```
 
-### 3. Backend Setup (.NET Web API)
+For Azure Managed Redis during local development, store its TLS connection string in the `ConnectionStrings:Redis` secret as described below. The API requires an explicit Redis connection and does not silently use localhost.
 
-1. **Navigate to the API directory:**
+### 3. Backend Setup (.NET API)
 
-   ```bash
-   cd ExpenseAPI
-   ```
+From the repository root, run the API with the Development profile so it loads User Secrets:
 
-2. **Restore NuGet packages:**
+```bash
+cd ExpenseAPI
+export ConnectionStrings__DefaultConnection='Data Source=localhost,1434;Initial Catalog=ExpenseManagement;User ID=SA;Password=Whitepaper#9098;Pooling=False;Connect Timeout=15;Encrypt=True;Trust Server Certificate=True;Authentication=SqlPassword;Application Name=ExpenseTracker;Command Timeout=30'
+dotnet restore
+dotnet ef database update
+dotnet run --launch-profile http
+```
 
-   ```bash
-   dotnet restore
-   ```
+`Initial Catalog=ExpenseManagement` selects the app database. EF Core applies pending migrations at startup. Never commit connection strings or passwords.
 
-3. **Update the connection string (if needed):**
+The API reads and writes SQL Server data through Entity Framework Core. The categories, subcategories, and expenses list endpoints use Redis cache-aside with a two-minute TTL; successful writes invalidate the relevant cached lists.
 
-   Edit `appsettings.json` to match your SQL Server setup:
-
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Server=localhost;Database=ExpenseDb;User Id=SA;Password=Password.1;TrustServerCertificate=True;"
-     }
-   }
-   ```
-
-4. **Run database migrations:**
-
-   ```bash
-   dotnet ef database update
-   ```
-
-   This will create the database and tables automatically.
-
-5. **Start the API server:**
-
-   ```bash
-   dotnet run
-   ```
+The existing `ExpenseManagement.db` SQLite file is not migrated or used. If it contains data you need, migrate that data to SQL Server separately before switching over.
 
    The API will be available at `http://localhost:8000`
 
-### 4. Frontend Setup (Angular)
+### Redis cache behavior
 
-1. **Navigate back to the project root:**
+- Redis is configured through `ConnectionStrings__Redis`; the API does not assume a local endpoint.
+- Cached list data expires after two minutes.
+- Successful creates, updates, and deletes invalidate affected list caches.
+- If Redis is unavailable, the cache service logs the Redis error and falls back to the source query for reads.
 
-   ```bash
-   cd ..
-   ```
+### Configure Azure Managed Redis
 
-2. **Install dependencies:**
+The API project has a .NET User Secrets ID. From `ExpenseAPI`, store credentials locally rather than in `appsettings.json`. Copy the hostname and TLS port from the Azure portal. For Azure Managed Redis, access-key authentication is disabled by default; enable it in the instance's Authentication settings before using a key. Microsoft recommends Microsoft Entra authentication where possible. Never commit access keys or paste them into shared logs or chat.
 
-   ```bash
-   npm install
-   ```
+For local Redis instead, run `dotnet user-secrets set "ConnectionStrings:Redis" "localhost:6379"` from `ExpenseAPI`.
 
-3. **Start the development server:**
-
-   ```bash
-   npm start
-   ```
-
-   The Angular app will be available at `http://localhost:4200`
-
-### 5. Verify Setup
-
-1. **API Health Check:**
-
-   - Test endpoints using the provided HTTP file: `ExpenseAPI.http`
-   - Or test directly: `http://localhost:8000/api/categories`
-
-2. **Frontend Check:**
-   - Visit `http://localhost:4200` to see the Angular application
-   - Navigate through the menu to test functionality
-
-## 🧪 API Testing
-
-### Using the HTTP Test File
-
-The project includes an `ExpenseAPI.http` file for testing all API endpoints. This file contains pre-configured requests for all CRUD operations.
-
-#### How to Use:
-
-1. **VS Code with REST Client Extension:**
-
-   ```bash
-   # Install the REST Client extension
-   # Open ExpenseAPI.http file
-   # Click "Send Request" above any endpoint
-   ```
-
-2. **IntelliJ IDEA:**
-
-   ```bash
-   # Open ExpenseAPI.http file
-   # Click the green arrow next to any request
-   ```
-
-3. **Other HTTP Clients:**
-   - Copy the requests from the HTTP file
-   - Paste into Postman, Insomnia, or any HTTP client
-
-#### Available Test Scenarios:
-
-- **Categories**: GET, POST, PUT, DELETE operations
-- **SubCategories**: Full CRUD with category relationships
-- **Expenses**: Complete expense management with relationships
-- **Sample Data**: Pre-configured requests to create test data
-- **Error Testing**: Invalid requests to test error handling
-
-#### Example Usage:
-
-```http
-### Get all categories
-GET http://localhost:8000/api/categories
-Accept: application/json
-
-### Create a new category
-POST http://localhost:8000/api/categories
-Content-Type: application/json
-
-{
-  "name": "Healthcare",
-  "description": "Medical and health-related expenses"
-}
-```
-
-## 🔧 Configuration
-
-### Database Connection
-
-The application uses the following default connection string:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=ExpenseDb;User Id=SA;Password=Password.1;TrustServerCertificate=True;"
-  }
-}
-```
-
-### Environment Variables
-
-For production deployment, consider using environment variables:
+To avoid putting the key in shell history, enter it through a hidden prompt instead:
 
 ```bash
-export ConnectionStrings__DefaultConnection="Server=your-server;Database=ExpenseDb;User Id=your-user;Password=your-password;TrustServerCertificate=True;"
+cd ExpenseAPI
+printf "Azure Redis host: "
+IFS= read -r REDIS_HOST
+printf "Azure Redis TLS port: "
+IFS= read -r REDIS_PORT
+printf "Azure Redis access key: "
+IFS= read -r -s REDIS_ACCESS_KEY
+printf '\n'
+REDIS_CONNECTION="${REDIS_HOST}:${REDIS_PORT},password=${REDIS_ACCESS_KEY},ssl=True,abortConnect=False"
+dotnet user-secrets set "ConnectionStrings:Redis" "$REDIS_CONNECTION"
+unset REDIS_CONNECTION
+unset REDIS_ACCESS_KEY
 ```
 
-## 🐳 Docker Commands Reference
+The `dotnet user-secrets set` command confirms when the value has been saved. Avoid running `dotnet user-secrets list` while screen sharing because it prints secret values.
 
-### SQL Server Container Management
+`dotnet run --launch-profile http` runs the API in Development, where ASP.NET Core loads User Secrets. The Redis connection setting is required; the API no longer silently defaults to local Redis. For production, provide `ConnectionStrings__Redis` through the hosting platform's secret configuration.
+
+### Azure deployment checklist
+
+Azure resources are managed separately from this repository. Before publishing:
+
+1. Provision Azure SQL Database (or another SQL Server reachable from the API) and Azure Managed Redis. The development SQL container at `localhost,1434` is not reachable by an API running in Azure. Configure Azure SQL firewall/network access for the API host.
+2. Deploy the API to Azure App Service. In App Service **Configuration**, set `ConnectionStrings__DefaultConnection` and `ConnectionStrings__Redis` to the Azure service connection strings. Keep the Redis key in App Service settings/Key Vault, not in source files. For Azure Managed Redis use its DNS hostname, TLS port, access key, and `ssl=True`.
+3. Configure `Cors__AllowedOrigins__0` in the API App Service with the exact deployed frontend origin, such as `https://your-app.azurestaticapps.net`. The API refuses to start in production if no allowed frontend origin is configured.
+4. Before building the frontend for production, ensure `src/environments/environment.production.ts` contains the deployed API base URL ending in `/api`. This URL is compiled into the Angular bundle; rebuild and redeploy after changing it.
+5. Build Angular for production with `npm run build`. For Azure Static Web Apps, use the generated browser output (typically `dist/demo/browser`) as the artifact location. `src/staticwebapp.config.json` enables client-side Angular route fallback when someone directly opens `/expenses`.
+6. Apply EF Core migrations to the Azure SQL database before serving traffic. The API also calls `Database.Migrate()` on startup, so its SQL identity must have permission to change schema. For production, prefer applying migrations as a controlled deployment step and grant the runtime identity only the database permissions it needs.
+
+The existing local 40-category/40-subcategory/10,000-expense dataset is not copied by these deployment steps. Plan a separate data transfer into Azure SQL if you want to keep it; the startup seeder only creates a small sample dataset when the database is empty.
+
+### GitHub Actions deployment
+
+The workflows in `.github/workflows` deploy the API and frontend independently when relevant files are pushed to `main`. They can also be started manually from the repository's **Actions** tab.
+
+Before the first workflow run, configure these values under the GitHub repository's **Settings → Secrets and variables → Actions**:
+
+- Secret `AZURE_WEBAPP_PUBLISH_PROFILE`: download the publish profile from the App Service in the Azure portal and save its full contents as a GitHub secret.
+- Secret `AZURE_STATIC_WEB_APPS_API_TOKEN`: copy the deployment token from the Static Web App in the Azure portal and save it as a GitHub secret.
+- Repository variable `AZURE_WEBAPP_NAME`: the App Service resource name (for this setup, `expense-manager-api`).
+
+Do not add publish profiles, deployment tokens, or database/Redis connection strings to the repository. The workflows deploy code only; SQL, Redis, and `Cors__AllowedOrigins__0` must already be configured as App Service settings. Ensure the production Angular API URL matches the App Service address before deploying the frontend.
+
+### Database migrations
+
+The EF Core migrations in `ExpenseAPI/Migrations` target SQL Server. When the EF model changes, create and apply a migration with:
 
 ```bash
-# Start SQL Server
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Password.1" -p 1433:1433 --name sqlserver -d mcr.microsoft.com/mssql/server:2022-latest
-
-# Stop SQL Server
-docker stop sqlserver
-
-# Start existing container
-docker start sqlserver
-
-# Remove container
-docker rm sqlserver
-
-# View logs
-docker logs sqlserver
+cd ExpenseAPI
+dotnet ef migrations add DescribeYourChange
+dotnet ef database update
 ```
 
-### Database Management
+### Generated IDs
+
+Categories, subcategories, and expenses use SQL Server identity IDs. On API startup and after deletions, the API reseeds each identity to the current maximum row ID so the next successful insert uses the next number. SQL Server can still leave gaps if an insert fails or a transaction rolls back; identity values are not a gapless sequence.
+
+### Frontend Setup (Angular)
+
+In a separate terminal, from the repository root:
 
 ```bash
-# Connect to SQL Server (if you have sqlcmd installed)
-sqlcmd -S localhost -U SA -P "Password.1"
-
-# Or use Azure Data Studio / SQL Server Management Studio
-# Server: localhost,1433
-# Username: SA
-# Password: Password.1
+npm install
+npm start
 ```
 
-## Usage Guide
+The Angular app will start on `http://localhost:4200`.
 
-### Navigation
+### Quick Start (Both Servers)
 
-- **Menu Items**: Click to view read-only lists (Categories, Sub-categories, Expenses)
-- **Manage Submenu**: Click to access full management interface with add/edit/delete functionality
-- **Expand/Collapse**: Click the arrow icons to expand/collapse submenus
-- **Mobile Navigation**: Use the hamburger menu on mobile devices
+For convenience, you can start the API and frontend in separate terminals using the commands above. Both must be running for the application to work.
 
-### Managing Data
+## API Endpoints
 
-1. **View Data**: Navigate to main menu items to see read-only lists
-2. **Add New Items**: Go to "Manage" submenu and click "Add" buttons
-3. **Edit Items**: Click "Edit" button in the Actions column
-4. **Delete Items**: Click "Delete" button and confirm in the modal dialog
+### Categories
 
-##
+- `GET /api/categories` - Get all categories
+- `GET /api/categories/{id}` - Get category by ID
+- `POST /api/categories` - Create new category
+- `PUT /api/categories/{id}` - Update category
+- `DELETE /api/categories/{id}` - Delete category
 
-- Built with Angular 20 and .NET 9
-- Uses Entity Framework Core for data access
-- SQLite for lightweight database storage
-- Modern responsive design principles
+### Sub-categories
 
----
+- `GET /api/subcategories` - Get all sub-categories with category names
+- `GET /api/subcategories/{id}` - Get sub-category by ID
+- `GET /api/subcategories/ByCategory/{categoryId}` - Get sub-categories by category
+- `POST /api/subcategories` - Create new sub-category
+- `PUT /api/subcategories/{id}` - Update sub-category
+- `DELETE /api/subcategories/{id}` - Delete sub-category
 
-**Happy Expense Tracking! 💰**
+### Expenses
+
+- `GET /api/expenses` - Get all expenses with category and sub-category names
+- `GET /api/expenses/{id}` - Get expense by ID
+- `POST /api/expenses` - Create new expense
+- `PUT /api/expenses/{id}` - Update expense
+- `DELETE /api/expenses/{id}` - Delete expense
+
+## Database Schema
+
+### Categories Table
+
+- `Id` (INT IDENTITY, Primary Key)
+- `Name` (NVARCHAR(100), Required)
+- `Description` (NVARCHAR(500), Required)
+
+### SubCategories Table
+
+- `Id` (INT IDENTITY, Primary Key)
+- `Name` (NVARCHAR(100), Required)
+- `Description` (NVARCHAR(500), Required)
+- `CategoryId` (INT, Foreign Key to Categories)
+
+### Expenses Table
+
+- `Id` (INT IDENTITY, Primary Key)
+- `Name` (NVARCHAR(200), Required)
+- `Description` (NVARCHAR(1000), Required)
+- `Amount` (DECIMAL(18,2), Required)
+- `Date` (DATETIME2, Required)
+- `CategoryId` (INT, Foreign Key to Categories)
+- `SubCategoryId` (INT, Foreign Key to SubCategories)

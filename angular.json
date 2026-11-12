@@ -22,11 +22,23 @@
               "namedChunks": false,
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ]
             }
           },
           "options": {
-            "assets": [],
+            "assets": [
+              {
+                "glob": "staticwebapp.config.json",
+                "input": "src",
+                "output": "/"
+              }
+            ],
             "index": "src/index.html",
             "browser": "src/main.ts",
             "outputPath": "dist/demo",

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ExpenseAPI.Data;
 using ExpenseAPI.Models;
 using ExpenseAPI.DTOs;
+using ExpenseAPI.Services;
 
 namespace ExpenseAPI.Controllers
 {
@@ -11,10 +12,17 @@ namespace ExpenseAPI.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ExpenseDbContext _context;
+        private readonly RedisCacheService _cache;
+        private readonly SqlServerIdentityService _identityService;
 
-        public CategoriesController(ExpenseDbContext context)
+        public CategoriesController(
+            ExpenseDbContext context,
+            RedisCacheService cache,
+            SqlServerIdentityService identityService)
         {
             _context = context;
+            _cache = cache;
+            _identityService = identityService;
         }
 
         // GET: api/Categories
@@ -23,7 +31,9 @@ namespace ExpenseAPI.Controllers
         {
             try
             {
-                return await _context.Categories.ToListAsync();
+                return await _cache.GetOrCreateAsync(
+                    "categories:all",
+                    () => _context.Categories.AsNoTracking().ToListAsync());
             }
             catch (Exception ex)
             {
@@ -68,6 +78,7 @@ namespace ExpenseAPI.Controllers
                 existingCategory.Description = updateDto.Description;
 
                 await _context.SaveChangesAsync();
+                await InvalidateCategoryDataAsync(id);
                 return NoContent();
             }
             catch (DbUpdateConcurrencyException)
@@ -101,6 +112,7 @@ namespace ExpenseAPI.Controllers
 
                 _context.Categories.Add(category);
                 await _context.SaveChangesAsync();
+                await InvalidateCategoryDataAsync(category.Id);
 
                 return CreatedAtAction("GetCategory", new { id = category.Id }, category);
             }
@@ -124,6 +136,9 @@ namespace ExpenseAPI.Controllers
 
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
+                await _identityService.ReseedCategoriesAsync();
+                await _identityService.ReseedSubCategoriesAsync();
+                await InvalidateCategoryDataAsync(id);
 
                 return NoContent();
             }
@@ -136,6 +151,15 @@ namespace ExpenseAPI.Controllers
         private bool CategoryExists(int id)
         {
             return _context.Categories.Any(e => e.Id == id);
+        }
+
+        private Task InvalidateCategoryDataAsync(int categoryId)
+        {
+            return _cache.RemoveAsync(
+                "categories:all",
+                "subcategories:all",
+                $"subcategories:category:{categoryId}",
+                "expenses:all");
         }
     }
 }

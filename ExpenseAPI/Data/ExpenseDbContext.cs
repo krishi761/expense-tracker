@@ -33,7 +33,8 @@ namespace ExpenseAPI.Data
             modelBuilder.Entity<Expense>()
                 .HasOne(e => e.SubCategory)
                 .WithMany(sc => sc.Expenses)
-                .HasForeignKey(e => e.SubCategoryId)
+                .HasForeignKey(e => new { e.SubCategoryId, e.CategoryId })
+                .HasPrincipalKey(sc => new { sc.Id, sc.CategoryId })
                 .OnDelete(DeleteBehavior.Restrict);
 
         }

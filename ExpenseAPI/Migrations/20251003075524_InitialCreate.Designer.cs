@@ -12,8 +12,13 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExpenseAPI.Migrations
 {
     [DbContext(typeof(ExpenseDbContext))]
+<<<<<<<< HEAD:ExpenseAPI/Migrations/20251003075524_InitialCreate.Designer.cs
     [Migration("20251003075524_InitialCreate")]
     partial class InitialCreate
+========
+    [Migration("20261105104124_InitialSqlServer")]
+    partial class InitialSqlServer
+>>>>>>>> 9377198 (Prepare expense tracker for Azure deployment):ExpenseAPI/Migrations/20261105104124_InitialSqlServer.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

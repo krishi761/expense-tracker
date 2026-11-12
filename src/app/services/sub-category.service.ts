@@ -2,12 +2,13 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { BehaviorSubject, Observable, tap } from "rxjs";
 import { SubCategory } from "../models/sub-category.model";
+import { environment } from "../../environments/environment";
 
 @Injectable({
   providedIn: "root",
 })
 export class SubCategoryService {
-  private apiUrl = "http://localhost:8000/api/subcategories";
+  private apiUrl = `${environment.apiBaseUrl}/subcategories`;
   private subCategoriesSubject = new BehaviorSubject<SubCategory[]>([]);
 
   constructor(private http: HttpClient) {

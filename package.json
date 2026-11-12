@@ -25,8 +25,9 @@
   },
   "devDependencies": {
     "@angular/build": "^20.0.0",
-    "@angular/cli": "^20.0.0",
+    "@angular/cli": "^17.3.17",
     "@angular/compiler-cli": "^20.0.0",
+    "baseline-browser-mapping": "^2.11.35",
     "typescript": "^5.8.2"
   }
 }

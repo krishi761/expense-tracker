@@ -164,6 +164,9 @@ import { CategoryService } from "../services/category.service";
               subCategoryToDelete?.name
             }}"?
           </p>
+          <p class="error-message" *ngIf="deleteError" role="alert">
+            {{ deleteError }}
+          </p>
           <div class="modal-actions">
             <button class="btn btn-danger" (click)="deleteSubCategory()">
               Delete
@@ -447,6 +450,7 @@ export class SubCategoriesComponent implements OnInit, OnDestroy {
   currentView: 'list' | 'form' = 'list';
   isEditing = false;
   showDeleteModal = false;
+  deleteError = "";
   subCategoryToDelete: SubCategory | null = null;
   private routeSubscription: Subscription = new Subscription();
 
@@ -601,6 +605,7 @@ export class SubCategoriesComponent implements OnInit, OnDestroy {
 
   confirmDelete(subCategory: SubCategory) {
     this.subCategoryToDelete = subCategory;
+    this.deleteError = "";
     this.showDeleteModal = true;
   }
 
@@ -608,9 +613,23 @@ export class SubCategoriesComponent implements OnInit, OnDestroy {
     if (this.subCategoryToDelete) {
       this.subCategoryService
         .deleteSubCategory(this.subCategoryToDelete.id)
-        .subscribe(() => {
-          this.cancelDelete();
-          this.refreshSubCategories();
+        .subscribe({
+          next: () => {
+            this.cancelDelete();
+            this.refreshSubCategories();
+          },
+          error: (error) => {
+            if (error.status === 409) {
+              this.deleteError =
+                "This subcategory cannot be deleted because expenses are linked to it. Reassign or delete those expenses first.";
+              return;
+            }
+
+            this.deleteError =
+              (typeof error.error === "string" && error.error) ||
+              error.error?.title ||
+              "Failed to delete subcategory. Please try again.";
+          },
         });
     }
   }
@@ -618,5 +637,6 @@ export class SubCategoriesComponent implements OnInit, OnDestroy {
   cancelDelete() {
     this.showDeleteModal = false;
     this.subCategoryToDelete = null;
+    this.deleteError = "";
   }
 }

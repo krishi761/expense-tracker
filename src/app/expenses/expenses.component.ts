@@ -1,8 +1,12 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+<<<<<<< HEAD
 import { Router, ActivatedRoute } from "@angular/router";
 import { Subscription } from "rxjs";
+=======
+import { ActivatedRoute } from "@angular/router";
+>>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
 import { Expense } from "../models/expense.model";
 import { Category } from "../models/category.model";
 import { SubCategory } from "../models/sub-category.model";
@@ -576,12 +580,16 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     categoryId: 0,
     subCategoryId: 0,
   };
+  private expenseSource: "redis" | "sql" = "redis";
 
   constructor(
     private expenseService: ExpenseService,
     private categoryService: CategoryService,
     private subCategoryService: SubCategoryService,
+<<<<<<< HEAD
     private router: Router,
+=======
+>>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
     private route: ActivatedRoute
   ) {}
 
@@ -594,7 +602,12 @@ export class ExpensesComponent implements OnInit, OnDestroy {
       this.subCategories = subCategories;
     });
 
-    this.expenseService.getExpensesWithNames().subscribe((expenses) => {
+    this.expenseSource =
+      this.route.snapshot.queryParamMap.get("source")?.toLowerCase() === "sql"
+        ? "sql"
+        : "redis";
+
+    this.expenseService.getExpensesWithNames(this.expenseSource).subscribe((expenses) => {
       this.expenses = expenses;
     });
 
@@ -727,7 +740,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   private refreshExpenses() {
-    this.expenseService.getExpensesWithNames().subscribe((expenses) => {
+    this.expenseService.getExpensesWithNames(this.expenseSource).subscribe((expenses) => {
       this.expenses = expenses;
     });
   }

@@ -79,7 +79,7 @@ namespace ExpenseAPI.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("SubCategoryId");
+                    b.HasIndex("SubCategoryId", "CategoryId");
 
                     b.ToTable("Expenses");
                 });
@@ -122,7 +122,8 @@ namespace ExpenseAPI.Migrations
 
                     b.HasOne("ExpenseAPI.Models.SubCategory", "SubCategory")
                         .WithMany("Expenses")
-                        .HasForeignKey("SubCategoryId")
+                        .HasForeignKey("SubCategoryId", "CategoryId")
+                        .HasPrincipalKey("Id", "CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

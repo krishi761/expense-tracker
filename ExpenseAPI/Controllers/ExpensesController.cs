@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ExpenseAPI.Data;
 using ExpenseAPI.Models;
 using ExpenseAPI.DTOs;
+using ExpenseAPI.Services;
 
 namespace ExpenseAPI.Controllers
 {
@@ -11,36 +12,59 @@ namespace ExpenseAPI.Controllers
     public class ExpensesController : ControllerBase
     {
         private readonly ExpenseDbContext _context;
+        private readonly RedisCacheService _cache;
+        private readonly SqlServerIdentityService _identityService;
 
-        public ExpensesController(ExpenseDbContext context)
+        public ExpensesController(
+            ExpenseDbContext context,
+            RedisCacheService cache,
+            SqlServerIdentityService identityService)
         {
             _context = context;
+            _cache = cache;
+            _identityService = identityService;
         }
 
         // GET: api/Expenses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetExpenses()
+        public async Task<ActionResult<IEnumerable<object>>> GetExpenses(
+            [FromQuery] string source = "redis",
+            CancellationToken cancellationToken = default)
         {
+            if (!string.Equals(source, "redis", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(source, "sql", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest("Invalid source. Use 'redis' or 'sql'.");
+            }
+
             try
             {
-                // Use a more reliable query approach
-                var expenses = await (from e in _context.Expenses
-                                    join c in _context.Categories on e.CategoryId equals c.Id
-                                    join s in _context.SubCategories on e.SubCategoryId equals s.Id
-                                    select new
-                                    {
-                                        e.Id,
-                                        e.Name,
-                                        e.Description,
-                                        e.Amount,
-                                        e.Date,
-                                        e.CategoryId,
-                                        e.SubCategoryId,
-                                        CategoryName = c.Name,
-                                        SubCategoryName = s.Name
-                                    }).ToListAsync();
+                var expensesQuery =
+                    from e in _context.Expenses.AsNoTracking()
+                    join c in _context.Categories.AsNoTracking() on e.CategoryId equals c.Id
+                    join s in _context.SubCategories.AsNoTracking() on e.SubCategoryId equals s.Id
+                    select new ExpenseListItemDto
+                    {
+                        Id = e.Id,
+                        Name = e.Name,
+                        Description = e.Description,
+                        Amount = e.Amount,
+                        Date = e.Date,
+                        CategoryId = e.CategoryId,
+                        SubCategoryId = e.SubCategoryId,
+                        CategoryName = c.Name,
+                        SubCategoryName = s.Name
+                    };
 
-                return expenses;
+                if (string.Equals(source, "sql", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await expensesQuery.ToListAsync(cancellationToken);
+                }
+
+                return await _cache.GetOrCreateAsync(
+                    "expenses:all",
+                    () => expensesQuery.ToListAsync(cancellationToken),
+                    cancellationToken);
             }
             catch (Exception ex)
             {
@@ -107,6 +131,7 @@ namespace ExpenseAPI.Controllers
                 existingExpense.SubCategoryId = updateDto.SubCategoryId;
 
                 await _context.SaveChangesAsync();
+                await _cache.RemoveAsync("expenses:all");
                 return NoContent();
             }
             catch (DbUpdateConcurrencyException)
@@ -159,6 +184,7 @@ namespace ExpenseAPI.Controllers
 
                 _context.Expenses.Add(expense);
                 await _context.SaveChangesAsync();
+                await _cache.RemoveAsync("expenses:all");
 
                 return CreatedAtAction("GetExpense", new { id = expense.Id }, expense);
             }
@@ -182,6 +208,8 @@ namespace ExpenseAPI.Controllers
 
                 _context.Expenses.Remove(expense);
                 await _context.SaveChangesAsync();
+                await _identityService.ReseedExpensesAsync();
+                await _cache.RemoveAsync("expenses:all");
 
                 return NoContent();
             }
@@ -208,13 +236,21 @@ namespace ExpenseAPI.Controllers
                     .Select(e => new { e.Id, e.Name, e.CategoryId, e.SubCategoryId })
                     .ToListAsync();
 
+                var categoryMismatches = await _context.Expenses
+                    .Where(e => _context.SubCategories.Any(s =>
+                        s.Id == e.SubCategoryId && s.CategoryId != e.CategoryId))
+                    .Select(e => new { e.Id, e.Name, e.CategoryId, e.SubCategoryId })
+                    .ToListAsync();
+
                 return new
                 {
                     TotalExpenses = totalExpenses,
                     TotalCategories = totalCategories,
                     TotalSubCategories = totalSubCategories,
                     OrphanedExpenses = orphanedExpenses,
-                    HasOrphanedData = orphanedExpenses.Any()
+                    HasOrphanedData = orphanedExpenses.Any(),
+                    CategoryMismatches = categoryMismatches,
+                    HasCategoryMismatches = categoryMismatches.Any()
                 };
             }
             catch (Exception ex)
