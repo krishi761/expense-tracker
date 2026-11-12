@@ -5,14 +5,6 @@ using ExpenseAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-<<<<<<< HEAD
-// Service Registration
-builder.Services.AddControllers();
-
-// Entity Framework with SQL Server
-builder.Services.AddDbContext<ExpenseDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-=======
 // Add services to the container.
 builder.Services
 	.AddControllers()
@@ -54,7 +46,6 @@ if (!builder.Environment.IsDevelopment() && allowedOrigins.Length == 0)
 	throw new InvalidOperationException(
 		"Configure Cors:AllowedOrigins with the deployed frontend origin.");
 }
->>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -114,15 +105,10 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-<<<<<<< HEAD
-    // Use more permissive CORS in development
-    app.UseCors("DevelopmentCors");
-=======
 	app.UseSwagger();
 	app.UseSwaggerUI();
 	// Use more permissive CORS in development
 	app.UseCors("DevelopmentCors");
->>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
 }
 else
 {
