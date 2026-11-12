@@ -27,6 +27,14 @@ jobs:
       - name: Publish API
         run: dotnet publish ExpenseAPI/ExpenseAPI.csproj --configuration Release --output "${{ runner.temp }}/expense-api"
 
+      - name: Validate deployment settings
+        env:
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          test -n "$AZURE_WEBAPP_NAME" || { echo "Repository variable AZURE_WEBAPP_NAME is missing."; exit 1; }
+          test -n "$AZURE_WEBAPP_PUBLISH_PROFILE" || { echo "Repository secret AZURE_WEBAPP_PUBLISH_PROFILE is missing."; exit 1; }
+
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
