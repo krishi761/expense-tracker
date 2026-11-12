@@ -1,12 +1,8 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-<<<<<<< HEAD
 import { Router, ActivatedRoute } from "@angular/router";
 import { Subscription } from "rxjs";
-=======
-import { ActivatedRoute } from "@angular/router";
->>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
 import { Expense } from "../models/expense.model";
 import { Category } from "../models/category.model";
 import { SubCategory } from "../models/sub-category.model";
@@ -586,10 +582,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     private expenseService: ExpenseService,
     private categoryService: CategoryService,
     private subCategoryService: SubCategoryService,
-<<<<<<< HEAD
     private router: Router,
-=======
->>>>>>> 9377198 (Prepare expense tracker for Azure deployment)
     private route: ActivatedRoute
   ) {}
 
