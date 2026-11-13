@@ -108,17 +108,18 @@ namespace ExpenseAPI.Controllers
                     return NotFound();
                 }
 
-                // Validate that the category exists
-                var categoryExists = await _context.Categories.AnyAsync(c => c.Id == updateDto.CategoryId);
-                if (!categoryExists)
+                var category = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == updateDto.CategoryId);
+                if (category == null)
                 {
                     return BadRequest("Invalid CategoryId. Category does not exist.");
                 }
 
-                // Validate that the subcategory exists and belongs to the specified category
-                var subCategoryExists = await _context.SubCategories
-                    .AnyAsync(sc => sc.Id == updateDto.SubCategoryId && sc.CategoryId == updateDto.CategoryId);
-                if (!subCategoryExists)
+                var subCategory = await _context.SubCategories
+                    .FirstOrDefaultAsync(sc =>
+                        sc.Id == updateDto.SubCategoryId &&
+                        sc.CategoryId == updateDto.CategoryId);
+                if (subCategory == null)
                 {
                     return BadRequest("Invalid SubCategoryId or SubCategory does not belong to the specified Category.");
                 }
@@ -127,8 +128,10 @@ namespace ExpenseAPI.Controllers
                 existingExpense.Description = updateDto.Description;
                 existingExpense.Amount = updateDto.Amount;
                 existingExpense.Date = updateDto.Date;
-                existingExpense.CategoryId = updateDto.CategoryId;
-                existingExpense.SubCategoryId = updateDto.SubCategoryId;
+                existingExpense.Category = category;
+                existingExpense.CategoryId = category.Id;
+                existingExpense.SubCategory = subCategory;
+                existingExpense.SubCategoryId = subCategory.Id;
 
                 await _context.SaveChangesAsync();
                 await _cache.RemoveAsync("expenses:all");
@@ -157,17 +160,18 @@ namespace ExpenseAPI.Controllers
         {
             try
             {
-                // Validate that the category exists
-                var categoryExists = await _context.Categories.AnyAsync(c => c.Id == createDto.CategoryId);
-                if (!categoryExists)
+                var category = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == createDto.CategoryId);
+                if (category == null)
                 {
                     return BadRequest("Invalid CategoryId. Category does not exist.");
                 }
 
-                // Validate that the subcategory exists and belongs to the specified category
-                var subCategoryExists = await _context.SubCategories
-                    .AnyAsync(sc => sc.Id == createDto.SubCategoryId && sc.CategoryId == createDto.CategoryId);
-                if (!subCategoryExists)
+                var subCategory = await _context.SubCategories
+                    .FirstOrDefaultAsync(sc =>
+                        sc.Id == createDto.SubCategoryId &&
+                        sc.CategoryId == createDto.CategoryId);
+                if (subCategory == null)
                 {
                     return BadRequest("Invalid SubCategoryId or SubCategory does not belong to the specified Category.");
                 }
@@ -178,8 +182,10 @@ namespace ExpenseAPI.Controllers
                     Description = createDto.Description,
                     Amount = createDto.Amount,
                     Date = createDto.Date,
-                    CategoryId = createDto.CategoryId,
-                    SubCategoryId = createDto.SubCategoryId
+                    Category = category,
+                    CategoryId = category.Id,
+                    SubCategory = subCategory,
+                    SubCategoryId = subCategory.Id
                 };
 
                 _context.Expenses.Add(expense);

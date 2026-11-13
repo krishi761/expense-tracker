@@ -105,9 +105,9 @@ namespace ExpenseAPI.Controllers
                     return NotFound();
                 }
 
-                // Validate that the category exists
-                var categoryExists = await _context.Categories.AnyAsync(c => c.Id == updateDto.CategoryId);
-                if (!categoryExists)
+                var category = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == updateDto.CategoryId);
+                if (category == null)
                 {
                     return BadRequest("Invalid CategoryId. Category does not exist.");
                 }
@@ -115,7 +115,8 @@ namespace ExpenseAPI.Controllers
                 var previousCategoryId = existingSubCategory.CategoryId;
                 existingSubCategory.Name = updateDto.Name;
                 existingSubCategory.Description = updateDto.Description;
-                existingSubCategory.CategoryId = updateDto.CategoryId;
+                existingSubCategory.Category = category;
+                existingSubCategory.CategoryId = category.Id;
 
                 await _context.SaveChangesAsync();
                 await InvalidateSubCategoryDataAsync(
@@ -146,9 +147,9 @@ namespace ExpenseAPI.Controllers
         {
             try
             {
-                // Validate that the category exists
-                var categoryExists = await _context.Categories.AnyAsync(c => c.Id == createDto.CategoryId);
-                if (!categoryExists)
+                var category = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == createDto.CategoryId);
+                if (category == null)
                 {
                     return BadRequest("Invalid CategoryId. Category does not exist.");
                 }
@@ -157,7 +158,8 @@ namespace ExpenseAPI.Controllers
                 {
                     Name = createDto.Name,
                     Description = createDto.Description,
-                    CategoryId = createDto.CategoryId
+                    Category = category,
+                    CategoryId = category.Id
                 };
                 
                 _context.SubCategories.Add(subCategory);
