@@ -72,7 +72,7 @@ dotnet run --launch-profile http
 
 `Initial Catalog=ExpenseManagement` selects the app database. EF Core applies pending migrations at startup. Never commit connection strings or passwords.
 
-The API reads and writes SQL Server data through Entity Framework Core. The categories, subcategories, and expenses list endpoints use Redis cache-aside with a two-minute TTL; successful writes invalidate the relevant cached lists.
+The API reads and writes SQL Server data through Entity Framework Core, with retries for transient SQL failures such as Azure SQL serverless resume. The categories, subcategories, and expenses list endpoints use Redis cache-aside with a two-minute TTL; successful writes invalidate the relevant cached lists.
 
 The existing `ExpenseManagement.db` SQLite file is not migrated or used. If it contains data you need, migrate that data to SQL Server separately before switching over.
 

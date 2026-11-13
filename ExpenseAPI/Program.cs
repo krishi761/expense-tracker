@@ -21,7 +21,9 @@ if (string.IsNullOrWhiteSpace(sqlServerConnection))
 }
 
 builder.Services.AddDbContext<ExpenseDbContext>(options =>
-	options.UseSqlServer(sqlServerConnection));
+	options.UseSqlServer(
+		sqlServerConnection,
+		sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
 var redisConnection = builder.Configuration.GetConnectionString("Redis");
 if (string.IsNullOrWhiteSpace(redisConnection))
