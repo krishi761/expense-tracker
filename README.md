@@ -117,25 +117,24 @@ The `dotnet user-secrets set` command confirms when the value has been saved. Av
 Azure resources are managed separately from this repository. Before publishing:
 
 1. Provision Azure SQL Database (or another SQL Server reachable from the API) and Azure Managed Redis. The development SQL container at `localhost,1434` is not reachable by an API running in Azure. Configure Azure SQL firewall/network access for the API host.
-2. Deploy the API to Azure App Service. In App Service **Configuration**, set `ConnectionStrings__DefaultConnection` and `ConnectionStrings__Redis` to the Azure service connection strings. Keep the Redis key in App Service settings/Key Vault, not in source files. For Azure Managed Redis use its DNS hostname, TLS port, access key, and `ssl=True`.
-3. Configure `Cors__AllowedOrigins__0` in the API App Service with the exact deployed frontend origin, such as `https://your-app.azurestaticapps.net`. The API refuses to start in production if no allowed frontend origin is configured.
-4. Before building the frontend for production, ensure `src/environments/environment.production.ts` contains the deployed API base URL ending in `/api`. This URL is compiled into the Angular bundle; rebuild and redeploy after changing it.
-5. Build Angular for production with `npm run build`. For Azure Static Web Apps, use the generated browser output (typically `dist/demo/browser`) as the artifact location. `src/staticwebapp.config.json` enables client-side Angular route fallback when someone directly opens `/expenses`.
+2. Deploy the API and Angular frontend together to Azure App Service. In App Service **Environment variables**, set `ConnectionStrings__DefaultConnection` and `ConnectionStrings__Redis` to the Azure service connection strings. Keep credentials in App Service settings/Key Vault, not in source files.
+3. If Azure Managed Redis is private-networked, configure App Service VNet integration to a VNet that can reach the Redis private endpoint, and ensure the Redis hostname resolves through the expected private DNS zone. The app can fall back to SQL when Redis is unavailable, but cache-backed requests will be slower.
+4. Configure `Cors__AllowedOrigins__0` in the API App Service with a valid origin. The API requires this setting in production; with the frontend served from the same App Service origin, browser API calls are same-origin.
+5. Ensure `src/environments/environment.production.ts` points to the App Service API base URL ending in `/api`. The production frontend is built and packaged into `ExpenseAPI/wwwroot` by the deployment workflow.
 6. Apply EF Core migrations to the Azure SQL database before serving traffic. The API also calls `Database.Migrate()` on startup, so its SQL identity must have permission to change schema. For production, prefer applying migrations as a controlled deployment step and grant the runtime identity only the database permissions it needs.
 
 The existing local 40-category/40-subcategory/10,000-expense dataset is not copied by these deployment steps. Plan a separate data transfer into Azure SQL if you want to keep it; the startup seeder only creates a small sample dataset when the database is empty.
 
 ### GitHub Actions deployment
 
-The workflows in `.github/workflows` deploy the API and frontend independently when relevant files are pushed to `main`. They can also be started manually from the repository's **Actions** tab.
+The API deployment workflow builds the Angular frontend, packages it with the API, and deploys both to the existing App Service when relevant files are pushed to `main`. It can also be started manually from the repository's **Actions** tab.
 
 Before the first workflow run, configure these values under the GitHub repository's **Settings → Secrets and variables → Actions**:
 
 - Secret `AZURE_WEBAPP_PUBLISH_PROFILE`: download the publish profile from the App Service in the Azure portal and save its full contents as a GitHub secret.
-- Secret `AZURE_STATIC_WEB_APPS_API_TOKEN`: copy the deployment token from the Static Web App in the Azure portal and save it as a GitHub secret.
 - Repository variable `AZURE_WEBAPP_NAME`: the App Service resource name (for this setup, `expense-manager-api`).
 
-Do not add publish profiles, deployment tokens, or database/Redis connection strings to the repository. The workflows deploy code only; SQL, Redis, and `Cors__AllowedOrigins__0` must already be configured as App Service settings. Ensure the production Angular API URL matches the App Service address before deploying the frontend.
+Do not add publish profiles, deployment tokens, or database/Redis connection strings to the repository. SQL, Redis, and `Cors__AllowedOrigins__0` must already be configured as App Service settings. The existing Static Web App resource is not used by this deployment setup.
 
 ### Database migrations
 

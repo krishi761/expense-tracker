@@ -6,6 +6,11 @@ on:
       - main
     paths:
       - "ExpenseAPI/**"
+      - "src/**"
+      - "angular.json"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
       - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
 
@@ -19,6 +24,18 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Angular frontend
+        run: npm run build -- --configuration production
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -26,6 +43,11 @@ jobs:
 
       - name: Publish API
         run: dotnet publish ExpenseAPI/ExpenseAPI.csproj --configuration Release --output "${{ runner.temp }}/expense-api"
+
+      - name: Add Angular frontend to API package
+        run: |
+          mkdir -p "${{ runner.temp }}/expense-api/wwwroot"
+          cp -R dist/demo/browser/. "${{ runner.temp }}/expense-api/wwwroot/"
 
       - name: Validate deployment settings
         env:

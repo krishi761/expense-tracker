@@ -116,8 +116,19 @@ else
 	app.UseCors("AllowAngularApp");
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
 app.MapControllers();
+
+var frontendIndexPath = Path.Combine(
+	app.Environment.WebRootPath ?? "wwwroot",
+	"index.html");
+if (File.Exists(frontendIndexPath))
+{
+	app.MapFallbackToFile("index.html");
+}
 
 app.Run();
