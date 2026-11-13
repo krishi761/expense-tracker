@@ -84,6 +84,7 @@ The existing `ExpenseManagement.db` SQLite file is not migrated or used. If it c
 - Cached list data expires after two minutes.
 - Successful creates, updates, and deletes invalidate affected list caches.
 - If Redis is unavailable, the cache service logs the Redis error and falls back to the source query for reads.
+- `/api/Expenses/diagnostics` includes `redisAvailable`, verified with a short-lived Redis write/read check.
 
 ### Configure Azure Managed Redis
 

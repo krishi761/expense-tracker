@@ -227,7 +227,8 @@ namespace ExpenseAPI.Controllers
 
         // GET: api/Expenses/diagnostics
         [HttpGet("diagnostics")]
-        public async Task<ActionResult<object>> GetExpensesDiagnostics()
+        public async Task<ActionResult<object>> GetExpensesDiagnostics(
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -248,11 +249,14 @@ namespace ExpenseAPI.Controllers
                     .Select(e => new { e.Id, e.Name, e.CategoryId, e.SubCategoryId })
                     .ToListAsync();
 
+                var redisAvailable = await _cache.CheckConnectionAsync(cancellationToken);
+
                 return new
                 {
                     TotalExpenses = totalExpenses,
                     TotalCategories = totalCategories,
                     TotalSubCategories = totalSubCategories,
+                    RedisAvailable = redisAvailable,
                     OrphanedExpenses = orphanedExpenses,
                     HasOrphanedData = orphanedExpenses.Any(),
                     CategoryMismatches = categoryMismatches,

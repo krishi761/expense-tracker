@@ -18,6 +18,42 @@ namespace ExpenseAPI.Services
             _logger = logger;
         }
 
+        public async Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default)
+        {
+            var key = $"healthcheck:{Guid.NewGuid():N}";
+            var expectedValue = Guid.NewGuid().ToString("N");
+
+            try
+            {
+                await _cache.SetStringAsync(
+                    key,
+                    expectedValue,
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(15)
+                    },
+                    cancellationToken);
+
+                var actualValue = await _cache.GetStringAsync(key, cancellationToken);
+                var isAvailable = string.Equals(actualValue, expectedValue, StringComparison.Ordinal);
+                if (!isAvailable)
+                {
+                    _logger.LogWarning("Redis connectivity check returned an unexpected value.");
+                }
+
+                return isAvailable;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Redis connectivity check failed.");
+                return false;
+            }
+        }
+
         public async Task<T> GetOrCreateAsync<T>(
             string key,
             Func<Task<T>> factory,
